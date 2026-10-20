@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front-end
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: front-end/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Validate Compose configuration
+        working-directory: .
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-disposable-password
+          STDL_JWT_SECRET_KEY: ci-only-disposable-jwt-key-not-for-production
+        run: docker compose config --quiet
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-disposable-password
+          MYSQL_DATABASE: simple_todo_list
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      STDL_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      STDL_DATASOURCE_HOST: 127.0.0.1
+      STDL_DATASOURCE_PORT: '3306'
+      STDL_DATASOURCE_DATABASE: simple_todo_list
+      STDL_DATASOURCE_USERNAME: root
+      STDL_DATASOURCE_PASSWORD: ci-only-disposable-password
+      STDL_JWT_SECRET_KEY: ci-only-disposable-jwt-key-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Initialize disposable test database
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: docker exec -i -e MYSQL_PWD="$STDL_DATASOURCE_PASSWORD" "$MYSQL_CONTAINER" mysql -u root simple_todo_list < back-end/src/main/resources/db/init.sql
+      - name: Run existing backend tests
+        working-directory: back-end
+        run: bash ./mvnw -B test

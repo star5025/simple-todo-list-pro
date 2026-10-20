@@ -1,56 +1,48 @@
-version: '3.8'
+name: simple-todo-list-pro
 
 services:
-  # MySQL数据库服务
   mysql:
     image: mysql:8.0
-    container_name: todo-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: "12345678"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: simple_todo_list
     ports:
-      - "3307:3306"  # 修改为主机端口为3307，避免与本地MySQL冲突
+      - "127.0.0.1:3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./back-end/src/main/resources/db:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d
-    networks:
-      - todo-network
+      - ./back-end/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' simple_todo_list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
-  # 后端服务
   backend:
     build: ./back-end
-    container_name: todo-backend
     environment:
-      stdl.datasource.driver-class-name: "com.mysql.cj.jdbc.Driver"
-      stdl.datasource.host: "mysql"
-      stdl.datasource.port: "3306"
-      stdl.datasource.database: "simple_todo_list"
-      stdl.datasource.username: "root"
-      stdl.datasource.password: "12345678"
+      STDL_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      STDL_DATASOURCE_HOST: mysql
+      STDL_DATASOURCE_PORT: "3306"
+      STDL_DATASOURCE_DATABASE: simple_todo_list
+      STDL_DATASOURCE_USERNAME: root
+      STDL_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      STDL_JWT_SECRET_KEY: ${STDL_JWT_SECRET_KEY:?Set STDL_JWT_SECRET_KEY in .env}
     ports:
-      - "8088:8088"
+      - "127.0.0.1:8088:8088"
     depends_on:
-      - mysql
-    networks:
-      - todo-network
+      mysql:
+        condition: service_healthy
 
-  # 前端服务
   frontend:
     build: ./front-end
-    container_name: todo-frontend
     environment:
-      - VITE_BACKEND_URL=http://backend:8088  # 设置后端服务URL
+      VITE_BACKEND_URL: http://backend:8088
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     depends_on:
       - backend
-    networks:
-      - todo-network
 
 volumes:
   mysql_data:
-
-networks:
-  todo-network:
-    driver: bridge

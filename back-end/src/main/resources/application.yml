@@ -18,7 +18,7 @@ spring:
 
 stdl:
   jwt:
-    secret-key : oneStar
+    secret-key : ${STDL_JWT_SECRET_KEY}
     ttl : 86400000
     token-name : token
     #TODO 到时候可以把ttl改的稍微短一点，现在方便测试token有效期为1天

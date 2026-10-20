@@ -1,0 +1,5 @@
+# Local configuration and credentials (front-end/.env is an inherited public API path).
+.env
+.env.*
+!.env.example
+*.log

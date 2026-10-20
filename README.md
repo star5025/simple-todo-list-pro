@@ -1,8 +1,12 @@
 <div align="center">
 
-### Simple Todo List
+### Simple Todo List Pro
 
 </div>
+
+基于 [star5025/simple-todo-list](https://github.com/star5025/simple-todo-list) 独立演进，保留原提交历史及作者信息；派生基线为 `1f5c8d38df4c7d2c740da52bdc9beb40c11e72c6`。原仓库不用于本项目开发。
+
+当前处于开发环境初始化阶段，下述 CRUD、收藏、筛选、分页、排序、国际化及页面内提醒均为继承功能，不代表 Pro 新增成果。页面内提醒依赖页面运行，不是可靠后台调度。已知对象级授权及 MD5 密码存储问题尚待修复，**请勿用于公网生产环境或真实敏感数据**。
 
 ---
 
@@ -30,7 +34,7 @@
 # <span id="项目结构">项目结构</span>
 
 ```
-simple-todo-list/                  # 项目根目录
+simple-todo-list-pro/              # 项目根目录
 ├── back-end/                      # 后端项目
 │   ├── src/main/java/             # 后端源码
 │   │   └── org/star5025/backend/  # 后端主包
@@ -141,22 +145,26 @@ simple-todo-list/                  # 项目根目录
 
 ```bash
 # 克隆项目到本地
-git clone https://github.com/star5025/simple-todo-list
-cd simple-todo-list
+git clone https://github.com/star5025/simple-todo-list-pro
+cd simple-todo-list-pro
 
-# 使用 docker-compose 启动所有服务
-docker-compose up
+# 复制配置模板，填写独立的数据库密码与随机JWT密钥（不要提交 .env）
+cp .env.example .env
+# Windows PowerShell 使用：Copy-Item .env.example .env
+# JWT密钥生成示例：node -p "require('crypto').randomBytes(32).toString('hex')"
+
+# 编辑 .env 后启动所有服务（需要 Docker Compose v2）
+docker compose up --build
 ```
 
 启动后，可以通过以下地址访问：
 
 - 前端界面：http://localhost:5173
 - 后端接口文档：http://localhost:8088/doc.html
-- 数据库：localhost:3306
+- 数据库：localhost:3307（容器内为 3306）
 
-> ⚠️ 注意：如果需要修改数据库用户名和密码，请同时修改以下文件：
-> 1. **docker-compose.yml** 中的 `MYSQL_ROOT_PASSWORD` 和相关环境变量
-> 2. 确保后端配置与数据库配置保持一致
+> 配置保存在本地 `.env`，`MYSQL_ROOT_PASSWORD` 与 `STDL_JWT_SECRET_KEY` 必填；仓库不提供运行时默认密码或密钥。Compose 服务端口仅绑定本机回环地址，容器和数据卷使用独立项目名前缀。
+> 首次创建全新数据卷时执行 `init.sql`；不要对已有数据库手动执行该脚本，它会删除并重建表。示例账号仅供本地测试。
 
 ### 方式二：分别启动各组件
 
@@ -178,7 +186,7 @@ cd back-end/src/main/resources/db
 mysql -u root -p simple_todo_list < init.sql
 ```
 
-> ⚠️ 注意：请根据实际的数据库用户名和密码修改连接信息。默认用户名为 root，密码为 12345678。
+> 使用独立的本地数据库与密码；若连接 Compose 的数据库，主机端口为 3307。不要连接原项目或其他项目的数据库。
 
 2. **启动后端服务**
 
@@ -193,14 +201,13 @@ STDL_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver \
 STDL_DATASOURCE_HOST=localhost \
 STDL_DATASOURCE_PORT=3306 \
 STDL_DATASOURCE_DATABASE=simple_todo_list \
-#你的数据库用户名
-STDL_DATASOURCE_USERNAME=root \ 
-#你的数据库密码
-STDL_DATASOURCE_PASSWORD=12345678 \
+STDL_DATASOURCE_USERNAME=root \
+STDL_DATASOURCE_PASSWORD='<your-local-database-password>' \
+STDL_JWT_SECRET_KEY='<your-random-jwt-key>' \
 ./mvnw spring-boot:run
 ```
 
-也可以通过修改 `back-end/src/main/resources/application.yml` 文件来配置数据库连接信息。
+上面的命令适用于 Bash；Windows PowerShell 请先用 `$env:变量名='值'` 设置相同的七个环境变量，再执行 `.\mvnw.cmd spring-boot:run`。根目录 `.env` 只由 Compose 自动加载，不会自动注入单独启动的 Java 进程。需要 Java 17；Maven Wrapper 会下载固定版本 Maven，无需全局安装 Maven。
 
 默认情况下，后端服务将运行在 http://localhost:8088
 
@@ -211,7 +218,7 @@ STDL_DATASOURCE_PASSWORD=12345678 \
 cd front-end
 
 # 安装依赖
-npm install
+npm ci
 
 # 启动前端开发服务器
 npm run dev
@@ -251,6 +258,10 @@ npm run dev
 ---
 
 # <span id="未来计划">未来计划</span>
+
+Pro 功能路线尚未确定；优先建议修复对象级授权和密码存储、补充测试，再讨论可靠重复任务与持久化提醒。以下为继承自原版的计划，不代表已批准开发。
+
+验证命令：前端 `npm ci`、`npm run build`；后端配置上述环境变量后执行 `./mvnw test`（Windows：`.\mvnw.cmd test`）。GitHub Actions 在 `development` 推送及 PR 时运行前端构建、Compose 配置校验和现有后端上下文测试。后端目前只有 `contextLoads`，前端尚无自动化测试套件，CI 通过不等于业务或安全验证完成。
 
 - [ ] 前端外观美化
 - [ ] 前端响应式设计，支持移动端

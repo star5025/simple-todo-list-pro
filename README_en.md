@@ -1,8 +1,12 @@
 <div align="center">
 
-### Simple Todo List
+### Simple Todo List Pro
 
 </div>
+
+Independently evolved from [star5025/simple-todo-list](https://github.com/star5025/simple-todo-list), preserving its commit history and authorship. Baseline: `1f5c8d38df4c7d2c740da52bdc9beb40c11e72c6`. Development does not modify the original repository.
+
+This project is at the environment-initialization stage. CRUD, favorites, filtering, pagination, sorting, i18n and in-page reminders below are inherited features, not new Pro contributions. Reminders require an open page and are not reliable background scheduling. Known object-level authorization and MD5 password-storage issues remain unresolved. **Do not deploy publicly or use real sensitive data.**
 
 ---
 
@@ -30,7 +34,7 @@
 # <span id="project-structure">Project Structure</span>
 
 ```
-simple-todo-list/                  # Project root directory
+simple-todo-list-pro/              # Project root directory
 ├── back-end/                      # Backend project
 │   ├── src/main/java/             # Backend source code
 │   │   └── org/star5025/backend/  # Backend main package
@@ -142,22 +146,26 @@ The project uses Docker Compose to manage MySQL, backend and frontend services u
 
 ```bash
 # Clone the project locally
-git clone https://github.com/star5025/simple-todo-list
-cd simple-todo-list
+git clone https://github.com/star5025/simple-todo-list-pro
+cd simple-todo-list-pro
 
-# Use docker-compose to start all services
-docker-compose up
+# Copy the template, then set a dedicated database password and random JWT key.
+cp .env.example .env
+# Windows PowerShell: Copy-Item .env.example .env
+# Generate a JWT key: node -p "require('crypto').randomBytes(32).toString('hex')"
+
+# After editing .env, start the services (Docker Compose v2 required).
+docker compose up --build
 ```
 
 After startup, you can access through the following addresses:
 
 - Frontend interface: http://localhost:5173
 - Backend API documentation: http://localhost:8088/doc.html
-- Database: localhost:3306
+- Database: localhost:3307 (3306 inside the container)
 
-> ⚠️ Note: If you need to modify the database username and password, please also modify the following files:
-> 1. **docker-compose.yml** for `MYSQL_ROOT_PASSWORD` and related environment variables
-> 2. Ensure backend configuration is consistent with database configuration
+> Set `MYSQL_ROOT_PASSWORD` and `STDL_JWT_SECRET_KEY` in your local `.env`; both are required, with no runtime default password or key. Published ports bind to loopback only. Containers and data volumes use a dedicated project prefix.
+> `init.sql` runs when a fresh data volume is created. Do not run it against existing data: it drops and recreates tables. The sample account is for local testing only.
 
 ### Method 2: Starting Components Separately
 
@@ -179,7 +187,7 @@ cd back-end/src/main/resources/db
 mysql -u root -p simple_todo_list < init.sql
 ```
 
-> ⚠️ Note: Please modify the connection information according to the actual database username and password. Default username is root, password is 12345678.
+> Use a dedicated local database and password. When connecting to the Compose database from the host, use port 3307. Do not connect to the original project's database or another project's database.
 
 2. **Starting the Backend Service**
 
@@ -194,16 +202,13 @@ STDL_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver \
 STDL_DATASOURCE_HOST=localhost \
 STDL_DATASOURCE_PORT=3306 \
 STDL_DATASOURCE_DATABASE=simple_todo_list \
-#your database username
-STDL_DATASOURCE_USERNAME=root \ 
-#your database password
-STDL_DATASOURCE_PASSWORD=12345678 \
+STDL_DATASOURCE_USERNAME=root \
+STDL_DATASOURCE_PASSWORD='<your-local-database-password>' \
+STDL_JWT_SECRET_KEY='<your-random-jwt-key>' \
 ./mvnw spring-boot:run
 ```
 
-```
-
-Alternatively, you can configure the database connection information by modifying the `back-end/src/main/resources/application.yml` file.
+The command above is for Bash. In Windows PowerShell, set the same seven variables with `$env:VARIABLE='value'`, then run `.\mvnw.cmd spring-boot:run`. The root `.env` is loaded automatically by Compose only, not by a standalone Java process. Java 17 is required; Maven Wrapper downloads the pinned Maven version, so a global Maven installation is unnecessary.
 
 By default, the backend service will run at http://localhost:8088
 
@@ -214,7 +219,7 @@ By default, the backend service will run at http://localhost:8088
 cd front-end
 
 # Install dependencies
-npm install
+npm ci
 
 # Start the frontend development server
 npm run dev
@@ -254,6 +259,10 @@ By default, the frontend service will run at http://localhost:5173
 ---
 
 # <span id="future-plans">Future Plans</span>
+
+The Pro feature roadmap is not yet selected. Recommended priorities are object-level authorization, password storage and tests, before considering reliable recurring tasks and persistent reminders. The list below is inherited planning, not approved Pro work.
+
+Verification: run `npm ci` and `npm run build` in `front-end`; set the backend environment variables above and run `./mvnw test` (Windows: `.\mvnw.cmd test`). GitHub Actions runs the frontend build, Compose configuration validation and existing backend context test on `development` pushes and PRs. The backend currently has only `contextLoads`, and the frontend has no automated test suite; green CI is not proof of business correctness or security.
 
 - [ ] Frontend appearance beautification
 - [ ] Frontend responsive design, supporting mobile devices
