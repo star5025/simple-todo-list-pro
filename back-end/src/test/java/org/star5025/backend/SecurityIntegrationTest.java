@@ -36,6 +36,11 @@ class SecurityIntegrationTest {
 
     @BeforeEach
     void fixtures() throws Exception {
+        String expectedDatabase = System.getenv("STDL_SECURITY_TEST_DATABASE");
+        assertNotNull(expectedDatabase, "STDL_SECURITY_TEST_DATABASE must explicitly name the isolated test database");
+        assertFalse(expectedDatabase.isBlank(), "STDL_SECURITY_TEST_DATABASE must not be blank");
+        assertEquals(expectedDatabase, db.queryForObject("SELECT DATABASE()", String.class),
+                "Connected database must match STDL_SECURITY_TEST_DATABASE before inserting fixtures");
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String nameA = "a_" + suffix;
         String nameB = "b_" + suffix;

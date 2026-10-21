@@ -267,9 +267,9 @@ npm run dev
 
 本轮安全修复、密码迁移、持久化提醒与基础重复任务已实现。以下为继承自原版的其他计划，不代表已批准开发。
 
-验证命令：前端 `npm ci`、`npm test`、`npm run build`；后端配置上述环境变量后执行 `./mvnw test`（Windows：`.\mvnw.cmd test`）。GitHub Actions 在 `development` 推送及 PR 时运行前端测试/构建、Compose 配置校验和后端单元/真实MySQL集成测试。集成测试使用事务回滚的临时数据，不要连接生产库。现有测试覆盖双账号隔离、脱敏、密码迁移、提醒版本、重复幂等与日期边界；CI通过仍不等于无Bug或完成全面审计。
+验证命令：前端 `npm ci`、`npm test`、`npm run build`；后端配置上述环境变量后执行 `./mvnw test`（Windows：`.\mvnw.cmd test`）。GitHub Actions 在 `development` 推送及 PR 时运行前端测试/构建、Compose 配置校验和后端单元/真实MySQL集成测试。集成测试必须使用单独初始化的可丢弃数据库，并显式设置 `STDL_SECURITY_TEST_DATABASE` 为该库名；写入测试数据前会核对连接库名。不要连接开发库或生产库；事务回滚不会恢复 MySQL 自增序列，应用启动建表也不在测试事务内。现有测试覆盖双账号隔离、脱敏、密码迁移、提醒版本、重复幂等与日期边界；CI通过仍不等于无Bug或完成全面审计。
 
-应用启动通过 `schema.sql` 幂等创建独立的 `task_schedule` 表，不重建现有任务。旧账号仅在正确登录时用CAS升级为BCrypt；新密码上限72个UTF-8字节。前端“记住用户名”不再保存密码，进入登录页会移除旧保存记录里的密码。Windows使用Node25启动开发服务若遇Vue DevTools的localStorage错误，可仅为当前终端设置 `NODE_OPTIONS=--no-experimental-webstorage`，推荐使用CI相同的Node22。
+应用启动通过 `schema.sql` 幂等创建独立的 `task_schedule` 表，不重建现有任务。旧账号仅在正确登录时用CAS升级为BCrypt；新密码上限72个UTF-8字节。历史短密码不套用新设密码的最小长度；超过72字节的历史密码使用显式 `{bcrypt-sha256}` 标记，以SHA-256/Base64预处理后再加盐BCrypt，避免截断或锁定旧账号。改密不会立即撤销旧Token，旧Token仍可用至过期；注销账号后Token才会失效。前端“记住用户名”不再保存密码，进入登录页会移除旧保存记录里的密码。Windows使用Node25启动开发服务若遇Vue DevTools的localStorage错误，可仅为当前终端设置 `NODE_OPTIONS=--no-experimental-webstorage`，推荐使用CI相同的Node22。
 
 - [ ] 前端外观美化
 - [ ] 前端响应式设计，支持移动端

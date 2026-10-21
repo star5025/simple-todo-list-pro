@@ -90,6 +90,19 @@ class UserServiceSecurityTest {
     }
 
     @Test
+    void loginMigratesHistoricalPasswordsOutsideNewPasswordPolicy() throws Exception {
+        for (String raw : new String[]{"abc", "a".repeat(73)}) {
+            String legacy = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("MD5")
+                    .digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            when(mapper.getByUserName("test")).thenReturn(user(1L, legacy));
+            when(mapper.updatePasswordIfUnchanged(eq(1L), eq(legacy), anyString())).thenReturn(1);
+            User loggedIn = service.login(credentials("test", raw));
+            assertTrue(passwords.matches(raw, loggedIn.getUserPassword()));
+            assertFalse(passwords.isLegacyMd5(loggedIn.getUserPassword()));
+        }
+    }
+
+    @Test
     void failedLegacyLoginNeverMigrates() {
         when(mapper.getByUserName("test")).thenReturn(user(1L, LEGACY));
         assertStatus(HttpStatus.UNAUTHORIZED, () -> service.login(credentials("test", "wrong123")));

@@ -52,6 +52,7 @@ jobs:
       STDL_DATASOURCE_HOST: 127.0.0.1
       STDL_DATASOURCE_PORT: '3306'
       STDL_DATASOURCE_DATABASE: simple_todo_list
+      STDL_SECURITY_TEST_DATABASE: simple_todo_list
       STDL_DATASOURCE_USERNAME: root
       STDL_DATASOURCE_PASSWORD: ci-only-disposable-password
       STDL_JWT_SECRET_KEY: ci-only-disposable-jwt-key-not-for-production

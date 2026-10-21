@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Base64;
 
 @Service
 public class PasswordService {
@@ -22,17 +23,41 @@ public class PasswordService {
         return encoder.encode(password);
     }
 
+    // Historical passwords may violate the new-password policy. Never truncate them during migration.
+    public String encodeLegacy(String password) {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Legacy password is required");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            return "{bcrypt-sha256}" + encoder.encode(prehash(password));
+        }
+        return encoder.encode(password);
+    }
+
+    private String prehash(String password) {
+        try {
+            return Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256")
+                    .digest(password.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    }
+
     public boolean isLegacyMd5(String encoded) {
         return encoded != null && encoded.matches("[a-fA-F0-9]{32}");
     }
 
     public boolean matches(String password, String encoded) {
-        if (password == null || password.isEmpty() || encoded == null
-                || password.getBytes(StandardCharsets.UTF_8).length > 72) {
+        if (password == null || password.isEmpty() || encoded == null) {
             return false;
         }
+        if (encoded.startsWith("{bcrypt-sha256}")) {
+            String hash = encoded.substring("{bcrypt-sha256}".length());
+            return hash.matches("\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}")
+                    && encoder.matches(prehash(password), hash);
+        }
         if (encoded.matches("\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}")) {
-            return encoder.matches(password, encoded);
+            return password.getBytes(StandardCharsets.UTF_8).length <= 72 && encoder.matches(password, encoded);
         }
         if (!isLegacyMd5(encoded)) {
             return false;

@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
         }
         String originalHash = user.getUserPassword();
         if (passwordService.isLegacyMd5(originalHash)) {
-            String upgradedHash = passwordService.encode(userDTO.getUserPassword());
+            String upgradedHash = passwordService.encodeLegacy(userDTO.getUserPassword());
             if (userMapper.updatePasswordIfUnchanged(user.getUserId(), originalHash, upgradedHash) == 1) {
                 user.setUserPassword(upgradedHash);
             } else {

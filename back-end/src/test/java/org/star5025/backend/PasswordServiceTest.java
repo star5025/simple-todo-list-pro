@@ -43,6 +43,24 @@ class PasswordServiceTest {
     }
 
     @Test
+    void legacyMigrationPreservesShortAndLongPasswordsWithoutTruncation() throws Exception {
+        for (String raw : new String[]{"abc", "a".repeat(73), "密".repeat(25)}) {
+            String md5 = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("MD5")
+                    .digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            assertTrue(passwords.matches(raw, md5));
+            String migrated = passwords.encodeLegacy(raw);
+            assertFalse(passwords.isLegacyMd5(migrated));
+            assertTrue(passwords.matches(raw, migrated));
+            assertFalse(passwords.matches(raw + "x", migrated));
+            if (raw.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+                assertTrue(migrated.startsWith("{bcrypt-sha256}$2a$12$"));
+                assertFalse(passwords.matches(raw.substring(0, 20), migrated));
+            }
+        }
+        assertFalse(passwords.matches("123456", "{bcrypt-sha256}broken"));
+    }
+
+    @Test
     void rejectsInvalidOrTruncatedNewPasswords() {
         for (String raw : new String[]{"", "    ", "1234", "a".repeat(73), "密".repeat(25)}) {
             ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> passwords.encode(raw));
