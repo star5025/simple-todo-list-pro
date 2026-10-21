@@ -490,7 +490,7 @@ const fetchTodos = async (filters = {}) => {
       ElMessage.error(response.msg || t('todoList.fetchFailed'))
     }
   } catch (error) {
-    console.error('获取待办列表失败:', error)
+    console.error('获取待办列表失败')
     ElMessage.error(t('userInfo.operationFailed') || (t('todoList.fetchFailed') + ': ' + error.message))
   } finally {
     loading.value = false

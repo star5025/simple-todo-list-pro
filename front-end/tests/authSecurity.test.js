@@ -70,3 +70,11 @@ test('registration does not log errors that may contain request credentials', ()
   const source = fs.readFileSync(new URL('../src/views/Register.vue', import.meta.url), 'utf8')
   assert(!/console\.(?:log|error)\(/.test(source))
 })
+
+test('request and global error handlers do not log raw error objects containing tokens', () => {
+  for (const file of ['App.vue', 'components/AddTodo.vue', 'components/Sidebar.vue',
+    'components/TodoList.vue', 'components/UserInfo.vue', 'utils/user.js']) {
+    const source = fs.readFileSync(new URL('../src/' + file, import.meta.url), 'utf8')
+    assert(!/console\.(?:log|warn|error)\([^\n]*,\s*error\s*\)/.test(source), file)
+  }
+})

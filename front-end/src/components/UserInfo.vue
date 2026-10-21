@@ -173,7 +173,7 @@ const fetchUserInfo = async () => {
       console.error('获取用户信息失败:', response.msg)
     }
   } catch (error) {
-    console.error('获取用户信息时发生错误:', error)
+    console.error('获取用户信息时发生错误')
   } finally {
     loading.value = false
   }

@@ -296,7 +296,7 @@ const fetchFavouriteTodos = async () => {
       ElMessage.error(response.msg || '获取收藏待办失败')
     }
   } catch (error) {
-    console.error('获取收藏待办失败:', error)
+    console.error('获取收藏待办失败')
   } finally {
     loadingFavourites.value = false
   }

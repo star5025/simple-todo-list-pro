@@ -24,7 +24,7 @@ export async function getCurrentUserInfo() {
       return null
     }
   } catch (error) {
-    console.error('获取用户信息失败:', error)
+    console.error('获取用户信息失败')
     return null
   }
 }
@@ -60,7 +60,7 @@ export function parseUserIdFromToken(token) {
     // 确保返回的是数字类型
     return userId ? parseInt(userId) : null
   } catch (error) {
-    console.error('解析JWT token失败:', error)
+    console.error('解析JWT token失败')
     return null
   }
 }

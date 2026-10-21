@@ -6,9 +6,9 @@ import { ElMessage } from 'element-plus'
 
 const hasError = ref(false)
 
-onErrorCaptured((error) => {
+onErrorCaptured(() => {
   hasError.value = true
-  console.error('全局错误捕获:', error)
+  console.error('页面出现未处理错误')
   ElMessage.error('页面出现错误，请刷新页面重试')
   return false
 })
