@@ -1,6 +1,7 @@
 package org.star5025.backend.service;
 
 import org.star5025.backend.dto.UserDTO;
+import org.star5025.backend.dto.UserUpdateDTO;
 import org.star5025.backend.entity.User;
 
 import java.util.List;
@@ -29,10 +30,9 @@ public interface UserService {
 
     /**
      * 修改用户信息
-     * @param user
-     * @return
+     * @param update
      */
-    void updateUser(User user);
+    void updateUser(UserUpdateDTO update);
 
     /**
      * 删除/注销用户

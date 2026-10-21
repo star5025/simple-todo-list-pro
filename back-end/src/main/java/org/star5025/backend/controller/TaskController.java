@@ -38,8 +38,7 @@ public class TaskController {
 
         log.info("新增任务：当前用户id：{} 任务名：{}", userId, taskDTO.getTaskName());
 
-        taskDTO.setUserId(userId); // 设置当前用户ID
-
+        // Service enforces ownership from BaseContext, including calls outside this controller.
         taskService.createTask(taskDTO);
 
         return Result.success();
@@ -80,18 +79,8 @@ public class TaskController {
     public Result updateTask(@PathVariable Long taskId, @RequestBody TaskPatchDTO taskPatchDTO) {
         log.info("更新任务Id为{}的任务", taskId);
         
-        try {
-            taskService.updateTask(taskId, taskPatchDTO);
-            return Result.success();
-        } catch (RuntimeException e) {
-            log.error("更新任务失败: ", e);
-            // 权限错误返回403，其他错误返回500
-            if (e.getMessage().contains("authorized")) {
-                return Result.error("权限不足，无法执行该操作", 403);
-            } else {
-                return Result.error("更新任务失败: " + e.getMessage(), 500);
-            }
-        }
+        taskService.updateTask(taskId, taskPatchDTO);
+        return Result.success();
     }
 
 

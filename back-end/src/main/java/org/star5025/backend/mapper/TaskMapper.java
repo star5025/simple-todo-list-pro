@@ -15,27 +15,36 @@ public interface TaskMapper {
      * @param task
      */
     @Insert("insert into task (task_name, status, description, created_time, start_time, remind_time, due_time, user_id, favourite)" +
-            "values (#{taskName},#{status},#{description},now(),#{startTime},#{remindTime},#{dueTime},#{userId},#{favourite})")
+            "values (#{taskName},#{status},#{description},UTC_TIMESTAMP(),#{startTime},#{remindTime},#{dueTime},#{userId},#{favourite})")
+    @Options(useGeneratedKeys = true, keyProperty = "taskId")
     void createTask(Task task);
 
     /**
      * 删除task表中的单个任务
      * @param taskId
      */
-    @Delete("delete from task where task_id = #{taskId}")
-    void deleteTask(Long taskId);
+    @Delete("delete from task where task_id = #{taskId} and user_id = #{userId}")
+    int deleteTask(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
     /**
      * 批量删除任务
      * @param taskIds
      */
     @Delete("<script>" +
-            "DELETE FROM task WHERE task_id IN " +
+            "DELETE FROM task WHERE user_id = #{userId} AND task_id IN " +
             "<foreach item='id' collection='taskIds' open='(' separator=',' close=')'>" +
             "#{id}" +
             "</foreach>" +
             "</script>")
-    void deleteTasks(@Param("taskIds") List<Long> taskIds);
+    int deleteTasks(@Param("taskIds") List<Long> taskIds, @Param("userId") Long userId);
+
+    @Select("<script>" +
+            "SELECT task_id FROM task WHERE user_id = #{userId} AND task_id IN " +
+            "<foreach item='id' collection='taskIds' open='(' separator=',' close=')'>" +
+            "#{id}" +
+            "</foreach> FOR UPDATE" +
+            "</script>")
+    List<Long> getOwnedTaskIdsForUpdate(@Param("taskIds") List<Long> taskIds, @Param("userId") Long userId);
 
     /**
      * 根据用户Id分页查询任务
@@ -95,13 +104,16 @@ public interface TaskMapper {
      * 根据任务Id查询单个任务
      * @param taskId
      */
-    @Select("select * from task where task_id = #{taskId}")
-    Task getTaskById(Long taskId);
+    @Select("select * from task where task_id = #{taskId} and user_id = #{userId}")
+    Task getTaskById(@Param("taskId") Long taskId, @Param("userId") Long userId);
+
+    @Select("select * from task where task_id = #{taskId} and user_id = #{userId} for update")
+    Task getTaskByIdForUpdate(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
     /**
      * 更新任务
      * @param newTask
      */
-    @Update("update task set task_name = #{taskName}, status = #{status}, description = #{description}, start_time = #{startTime}, remind_time = #{remindTime}, due_time = #{dueTime}, favourite = #{favourite} WHERE task_id = #{taskId}")
-    void updateTask(Task newTask);
+    @Update("update task set task_name = #{taskName}, status = #{status}, description = #{description}, start_time = #{startTime}, remind_time = #{remindTime}, due_time = #{dueTime}, favourite = #{favourite} WHERE task_id = #{taskId} AND user_id = #{userId}")
+    int updateTask(Task newTask);
 }

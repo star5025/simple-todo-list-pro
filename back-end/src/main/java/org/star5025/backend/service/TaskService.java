@@ -18,13 +18,13 @@ public interface TaskService {
     void createTask(TaskDTO taskDTO);
 
     /**
-     * 删除单个任务
+     * 删除当前登录用户的任务；不存在或不属于当前用户均返回404。
      * @param taskId
      */
     void deleteTask(Long taskId);
 
     /**
-     * 批量删除任务
+     * 原子删除当前用户的任务，重复ID去重；空参数返回400，混入他人或不存在的ID整批返回404。
      * @param taskIds
      */
     void deleteTasks(List<Long> taskIds);

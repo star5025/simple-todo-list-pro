@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Builder
@@ -15,6 +16,7 @@ public class UserVO {
 
     private String userName;
 
+    @ToString.Exclude
     private String token;
 
 }

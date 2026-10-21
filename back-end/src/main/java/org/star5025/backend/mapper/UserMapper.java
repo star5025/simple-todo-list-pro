@@ -3,55 +3,42 @@ package org.star5025.backend.mapper;
 import org.apache.ibatis.annotations.*;
 import org.star5025.backend.entity.User;
 
-import java.util.List;
-
 @Mapper
 public interface UserMapper {
-
-    /**
-     * 用户注册
-     * @param user
-     */
     @Insert("insert into user (user_name, user_password, create_time, task_count) values (#{userName}, #{userPassword}, #{createTime}, #{taskCount})")
     void register(User user);
 
-    /**
-     * 根据用户名查找用户
-     * @param userName
-     * @return
-     */
-    @Select("select * from user where user_name = #{userName}")
+    @Select("select user_id, user_name, user_password, create_time, task_count from user where user_name = #{userName}")
     User getByUserName(String userName);
 
-    /**
-     * 根据用户Id查找用户
-     * @param userId
-     * @return
-     */
-    @Select("select * from user where user_id = #{userId}")
+    @Select("select user_id, user_name, user_password, create_time, task_count from user where user_id = #{userId}")
     User getByUserId(Long userId);
 
-    /**
-     * 修改用户信息
-     * @param user
-     * @return
-     */
-    @Update("update user set user_name = #{userName}, user_password = #{userPassword} where user_id = #{userId}")
-    void update(User user);
+    @Select("select exists(select 1 from user where user_id = #{userId})")
+    boolean existsById(Long userId);
 
-    /**
-     * 删除/注销用户
-     * @param user
-     * @return
-     */
+    @Update("update user set user_name = #{userName} where user_id = #{userId}")
+    int updateName(@Param("userId") Long userId, @Param("userName") String userName);
+
+    @Update("update user set user_name = #{user.userName}, user_password = #{user.userPassword} " +
+            "where user_id = #{user.userId} and binary user_password = #{expectedPassword}")
+    int updateWithPassword(@Param("user") User user, @Param("expectedPassword") String expectedPassword);
+
+    @Update("update user set user_password = #{newPassword} " +
+            "where user_id = #{userId} and binary user_password = #{expectedPassword}")
+    int updatePasswordIfUnchanged(@Param("userId") Long userId,
+                                  @Param("expectedPassword") String expectedPassword,
+                                  @Param("newPassword") String newPassword);
+
+    @Delete("DELETE s FROM task_schedule s JOIN task t ON t.task_id=s.task_id WHERE t.user_id=#{userId}")
+    void deleteSchedules(Long userId);
+
+    @Delete("DELETE FROM task WHERE user_id=#{userId}")
+    void deleteTasks(Long userId);
+
     @Delete("delete from user where user_id = #{userId}")
-    void delete(User user);
-    
-    /**
-     * 增加用户任务计数
-     * @param userId
-     * @param count
-     */
+    int delete(User user);
+
     @Update("update user set task_count = task_count + #{count} where user_id = #{userId}")
     void incrementTaskCount(@Param("userId") Long userId, @Param("count") int count);
 }

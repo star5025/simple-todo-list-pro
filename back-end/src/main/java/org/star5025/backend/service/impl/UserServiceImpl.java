@@ -1,120 +1,153 @@
 package org.star5025.backend.service.impl;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.star5025.backend.context.BaseContext;
 import org.star5025.backend.dto.UserDTO;
+import org.star5025.backend.dto.UserUpdateDTO;
 import org.star5025.backend.entity.User;
-import org.star5025.backend.enumeration.AuthErrorType;
-import org.star5025.backend.exception.AuthException;
 import org.star5025.backend.mapper.UserMapper;
+import org.star5025.backend.service.PasswordService;
 import org.star5025.backend.service.UserService;
-import org.star5025.backend.utils.Md5Util;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private PasswordService passwordService;
 
-    /**
-     * 用户注册
-     * @param userDTO
-     */
     @Override
     public void register(UserDTO userDTO) {
-        User user = new User();
-        BeanUtils.copyProperties(userDTO,user);
-        // 对用户密码进行加密后再传入数据库，使用工具类的加密算法
-        user.setUserPassword(Md5Util.getMD5String(user.getUserPassword()));
-        // 设置创建时间
-        user.setCreateTime(LocalDateTime.now());
-        // 初始化任务计数为0
-        user.setTaskCount(0);
-        userMapper.register(user);
+        validateUserName(userDTO.getUserName());
+        User user = User.builder()
+                .userName(userDTO.getUserName())
+                .userPassword(passwordService.encode(userDTO.getUserPassword()))
+                .createTime(LocalDateTime.now(java.time.ZoneOffset.UTC))
+                .taskCount(0)
+                .build();
+        try {
+            userMapper.register(user);
+        } catch (DuplicateKeyException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "用户名已存在");
+        }
     }
 
-    /**
-     * 用户登录
-     * @param userDTO
-     * @return
-     */
     @Override
     public User login(UserDTO userDTO) {
-        String userName = userDTO.getUserName();
-        // 对用户输入的密码进行加密，以对数据库中已加密的密码进行匹配。使用工具类方法加密。
-        String userPassword = Md5Util.getMD5String(userDTO.getUserPassword());
-        // 根据用户名查找
-        User user = userMapper.getByUserName(userName);
-        if(user==null){
-            throw new AuthException(AuthErrorType.USERNAME_NOT_FOUND ,"User not found");
-
-            //是否需要跳转到注册？
-            //TODO 好问题，我也不知到要不要跳转到注册
-
+        if (userDTO.getUserName() == null || userDTO.getUserName().isBlank()
+                || userDTO.getUserPassword() == null || userDTO.getUserPassword().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "用户名和密码不能为空");
         }
-
-        if (!userPassword.equals(user.getUserPassword())) {
-            throw new AuthException(AuthErrorType.PASSWORD_INCORRECT ,"Password not match");
+        User user = userMapper.getByUserName(userDTO.getUserName());
+        if (user == null || !passwordService.matches(userDTO.getUserPassword(), user.getUserPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "用户名或密码错误");
+        }
+        String originalHash = user.getUserPassword();
+        if (passwordService.isLegacyMd5(originalHash)) {
+            String upgradedHash = passwordService.encode(userDTO.getUserPassword());
+            if (userMapper.updatePasswordIfUnchanged(user.getUserId(), originalHash, upgradedHash) == 1) {
+                user.setUserPassword(upgradedHash);
+            } else {
+                // Another login may have migrated it, or a password change/deletion won the race.
+                user = userMapper.getByUserId(user.getUserId());
+                if (user == null || passwordService.isLegacyMd5(user.getUserPassword())
+                        || !passwordService.matches(userDTO.getUserPassword(), user.getUserPassword())) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "账号状态已更改，请重新登录");
+                }
+            }
         }
         return user;
     }
 
-    /**
-     * 根据用户Id查找用户
-     * @param userId
-     * @return
-     */
     @Override
     public User getUserById(Long userId) {
-        return userMapper.getByUserId(userId);
+        requireSelf(userId);
+        User user = userMapper.getByUserId(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "用户不存在");
+        }
+        return user;
     }
 
-    /**
-     * 修改用户信息
-     * @param user
-     * @return
-     */
     @Override
-    public void updateUser(User user) {
-        userMapper.update(user);
+    public void updateUser(UserUpdateDTO update) {
+        User user = getUserById(update.getUserId());
+        boolean changePassword = update.getUserPassword() != null;
+        if (changePassword != (update.getOldPassword() != null)
+                || (changePassword && update.getOldPassword().isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "修改密码必须提供旧密码和新密码");
+        }
+        if (!changePassword && update.getUserName() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "未提供修改内容");
+        }
+        if (update.getUserName() != null) {
+            validateUserName(update.getUserName());
+            user.setUserName(update.getUserName());
+        }
+        String originalHash = user.getUserPassword();
+        if (changePassword) {
+            if (!passwordService.matches(update.getOldPassword(), originalHash)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "原密码不正确");
+            }
+            user.setUserPassword(passwordService.encode(update.getUserPassword()));
+        }
+        int changed;
+        try {
+            changed = changePassword
+                    ? userMapper.updateWithPassword(user, originalHash)
+                    : userMapper.updateName(user.getUserId(), user.getUserName());
+        } catch (DuplicateKeyException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "用户名已存在");
+        }
+        if (changed == 0) {
+            if (!userMapper.existsById(user.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "用户不存在");
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "用户状态已更改，请重试");
+        }
     }
 
-    /**
-     * 删除/注销用户
-     * @param user
-     * @return
-     */
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void deleteUser(User user) {
-        userMapper.delete(user);
+        requireSelf(user.getUserId());
+        userMapper.deleteSchedules(user.getUserId());
+        userMapper.deleteTasks(user.getUserId());
+        if (userMapper.delete(user) == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "用户不存在");
+        }
     }
-    
-    /**
-     * 增加用户任务计数
-     * @param userId
-     * @param count
-     */
+
     @Override
     public void incrementTaskCount(Long userId, int count) {
+        requireSelf(userId);
         userMapper.incrementTaskCount(userId, count);
     }
-    
-    /**
-     * 验证用户密码
-     * @param userId 用户ID
-     * @param password 密码（明文）
-     * @return 是否匹配
-     */
+
     @Override
     public boolean verifyPassword(Long userId, String password) {
-        User user = getUserById(userId);
-        if (user == null) {
-            return false;
+        return passwordService.matches(password, getUserById(userId).getUserPassword());
+    }
+
+    private void requireSelf(Long userId) {
+        Long currentId = BaseContext.requireCurrentId();
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "用户ID不能为空");
         }
-        String encryptedPassword = Md5Util.getMD5String(password);
-        return encryptedPassword.equals(user.getUserPassword());
+        if (!currentId.equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "不能操作其他用户");
+        }
+    }
+
+    private void validateUserName(String name) {
+        if (name == null || !name.matches("\\S{3,16}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "用户名须为3-16个非空白字符");
+        }
     }
 }
