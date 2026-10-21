@@ -22,6 +22,8 @@
     "en": "English"
   },
   "header": {
+    "navigation": "导航与筛选",
+    "language": "切换语言",
     "logout": "登出"
   },
   "sidebar": {
@@ -40,6 +42,7 @@
     "completed": "已完成"
   },
   "addTodo": {
+    "timePrecision": "时间精度",
     "title": "新增待办事项",
     "taskName": "待办事项名称",
     "enterTaskName": "请输入待办事项名称",
@@ -98,6 +101,8 @@
     "operationFailed": "操作失败"
   },
   "todoList": {
+    "title": "待办事项",
+    "pageSize": "每页条数",
     "showDate": "显示日期",
     "hideDate": "隐藏日期",
     "batchDelete": "批量删除",

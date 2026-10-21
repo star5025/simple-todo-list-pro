@@ -43,21 +43,10 @@ const reloadPage = () => {
   </el-container>
 </template>
 
-<style>
-* {
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-</style>
-
 <style scoped>
 .app-container {
   min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
@@ -65,13 +54,12 @@ html, body {
 .main-container {
   flex: 1;
   display: flex;
-  /* 允许主容器内容滚动 */
-  overflow: hidden;
+  min-width: 0;
 }
 
 .content-main {
   flex: 1;
-  overflow-y: auto;
+  min-width: 0;
   padding: 0;
 }
 

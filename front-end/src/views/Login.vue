@@ -12,7 +12,7 @@
         <el-select 
           v-model="currentLocale" 
           @change="changeLanguage"
-          size="small"
+          :aria-label="$t('header.language')"
         >
           <el-option 
             v-for="locale in locales" 
@@ -22,19 +22,19 @@
           />
         </el-select>
       </div>
-      <el-form class="login-form" label-position="left" :label-width="80" @keyup.enter="handleLogin">
-        <el-form-item :label="$t('login.username')">
-          <el-input v-model="loginForm.userName" :placeholder="$t('login.username')" clearable class="login-input" />
+      <el-form class="login-form" label-position="top" @submit.prevent="handleLogin">
+        <el-form-item :label="$t('login.username')" for="login-username">
+          <el-input id="login-username" name="username" autocomplete="username" v-model="loginForm.userName" :placeholder="$t('login.username')" clearable class="login-input" />
         </el-form-item>
-        <el-form-item :label="$t('login.password')">
-          <el-input v-model="loginForm.userPassword" type="password" :placeholder="$t('login.password')" show-password
+        <el-form-item :label="$t('login.password')" for="login-password">
+          <el-input id="login-password" name="password" autocomplete="current-password" v-model="loginForm.userPassword" type="password" :placeholder="$t('login.password')" show-password
             class="login-input" />
         </el-form-item>
         <el-form-item>
           <el-checkbox v-model="rememberMe" @change="handleRememberMeChange">{{ $t('login.rememberMe') }}</el-checkbox>
         </el-form-item>
         <el-form-item class="button-form-item">
-          <el-button type="primary" class="login-button" @click="handleLogin">
+          <el-button type="primary" class="login-button" native-type="submit" :loading="submitting">
             {{ $t('login.loginButton') }}
           </el-button>
         </el-form-item>
@@ -166,16 +166,21 @@ async function login() {
 }
 
 const loginResult = ref(null)
+const submitting = ref(false)
 
 const handleLogin = async () => {
-  loginResult.value = await login()
-  // 调用login()，根据返回的状态决定是否跳转
-
-  if (loginResult.value) { // 只有登录成功才执行后续操作
-    ElMessage.success('登录成功！')
-    router.push('/home')
-  } else {
-    loginForm.value.userPassword = ''
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    loginResult.value = await login()
+    if (loginResult.value) {
+      ElMessage.success('登录成功！')
+      router.push('/home')
+    } else {
+      loginForm.value.userPassword = ''
+    }
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -187,69 +192,86 @@ const goToRegister = () => {
 
 <style scoped>
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
+  display: grid;
+  place-items: center;
+  min-height: calc(100svh - 56px);
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: var(--app-bg, #f7f8fa);
+  color: #243047;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease-in-out;
-  position: relative;
+  max-width: 420px;
+  min-width: 0;
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  box-shadow: none;
 }
 
-.login-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
+.login-card :deep(.el-card__header),
+.login-card :deep(.el-card__body) {
+  padding: 24px;
 }
 
 .card-header {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card-header :deep(.el-text) {
+  color: #243047;
+  font-size: inherit;
 }
 
 .language-switch {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-}
-
-.login-form {
-  padding: 20px;
-}
-
-.login-input {
-  width: 100%;
-  transition: all 0.3s ease-in-out;
-}
-
-.login-input:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.1);
-}
-
-.button-form-item {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
 
+.language-switch .el-select {
+  width: 150px;
+  max-width: 100%;
+}
+
+.login-input,
 .login-button {
   width: 100%;
-  margin-top: 10px;
-  max-width: 200px;
+}
+
+.login-card :deep(.el-input__wrapper),
+.login-card :deep(.el-select__wrapper),
+.login-card :deep(.el-button),
+.login-card :deep(.el-checkbox) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.login-card :deep(.el-form-item__label) {
+  color: #243047;
+  line-height: 1.5;
 }
 
 .register-link {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
-  margin-top: 20px;
+  gap: 4px 8px;
+  color: var(--app-muted, #697586);
+}
+
+.register-link :deep(.el-text) {
+  color: inherit;
+}
+
+@media (max-width: 600px) {
+  .login-card :deep(.el-card__header),
+  .login-card :deep(.el-card__body) {
+    padding: 16px;
+  }
 }
 </style>

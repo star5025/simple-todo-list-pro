@@ -48,37 +48,37 @@
     </div>
   
   <!-- 修改用户名对话框 -->
-  <el-dialog v-model="usernameDialogVisible" :title="t('userInfo.editUsernameTitle')" width="400px" @keydown.enter="handleUsernameEnter">
-    <el-form :model="usernameForm" ref="usernameFormRef" @submit.prevent>
-      <el-form-item :label="t('userInfo.newUsername')" :label-width="80">
-        <el-input v-model="usernameForm.newUsername" autocomplete="off" ref="usernameInput" />
+  <el-dialog v-model="usernameDialogVisible" :title="t('userInfo.editUsernameTitle')" width="min(440px, calc(100vw - 32px))">
+    <el-form id="username-form" class="user-dialog-form" :model="usernameForm" ref="usernameFormRef" label-position="top" @submit.prevent="updateUsername">
+      <el-form-item :label="t('userInfo.newUsername')" for="profile-username">
+        <el-input id="profile-username" name="username" v-model="usernameForm.newUsername" autocomplete="username" ref="usernameInput" />
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="usernameDialogVisible = false">{{ t('userInfo.cancel') }}</el-button>
-        <el-button type="primary" @click="updateUsername">{{ t('userInfo.confirm') }}</el-button>
+        <el-button type="primary" native-type="submit" form="username-form">{{ t('userInfo.confirm') }}</el-button>
       </span>
     </template>
   </el-dialog>
   
   <!-- 修改密码对话框 -->
-  <el-dialog v-model="passwordDialogVisible" :title="t('userInfo.changePasswordTitle')" width="400px" @keydown.enter="handlePasswordEnter">
-    <el-form :model="passwordForm" ref="passwordFormRef" @submit.prevent>
-      <el-form-item :label="t('userInfo.oldPassword')" :label-width="80">
-        <el-input v-model="passwordForm.oldPassword" type="password" show-password autocomplete="off" ref="oldPasswordInput" />
+  <el-dialog v-model="passwordDialogVisible" :title="t('userInfo.changePasswordTitle')" width="min(440px, calc(100vw - 32px))">
+    <el-form id="password-form" class="user-dialog-form" :model="passwordForm" ref="passwordFormRef" label-position="top" @submit.prevent="updatePassword">
+      <el-form-item :label="t('userInfo.oldPassword')" for="profile-old-password">
+        <el-input id="profile-old-password" name="current-password" v-model="passwordForm.oldPassword" type="password" show-password autocomplete="current-password" ref="oldPasswordInput" />
       </el-form-item>
-      <el-form-item :label="t('userInfo.newPassword')" :label-width="80">
-        <el-input v-model="passwordForm.newPassword" type="password" show-password autocomplete="off" />
+      <el-form-item :label="t('userInfo.newPassword')" for="profile-new-password">
+        <el-input id="profile-new-password" name="new-password" v-model="passwordForm.newPassword" type="password" show-password autocomplete="new-password" />
       </el-form-item>
-      <el-form-item :label="t('userInfo.confirmPassword')" :label-width="80">
-        <el-input v-model="passwordForm.confirmPassword" type="password" show-password autocomplete="off" />
+      <el-form-item :label="t('userInfo.confirmPassword')" for="profile-confirm-password">
+        <el-input id="profile-confirm-password" name="confirm-password" v-model="passwordForm.confirmPassword" type="password" show-password autocomplete="new-password" />
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="passwordDialogVisible = false">{{ t('userInfo.cancel') }}</el-button>
-        <el-button type="primary" @click="updatePassword">{{ t('userInfo.confirm') }}</el-button>
+        <el-button type="primary" native-type="submit" form="password-form">{{ t('userInfo.confirm') }}</el-button>
       </span>
     </template>
   </el-dialog>
@@ -127,18 +127,6 @@ const handleEscKey = (event) => {
   if (event.key === 'Escape' && !usernameDialogVisible.value && !passwordDialogVisible.value) {
     router.push('/home/list')
   }
-}
-
-// 处理用户名对话框中按下Enter键
-const handleUsernameEnter = (event) => {
-  event.preventDefault()
-  updateUsername()
-}
-
-// 处理密码对话框中按下Enter键
-const handlePasswordEnter = (event) => {
-  event.preventDefault()
-  updatePassword()
 }
 
 // 组件挂载时添加键盘事件监听
@@ -331,56 +319,86 @@ onActivated(() => {
 <style scoped>
 .user-info-container {
   width: 100%;
+  min-width: 0;
+  color: #243047;
 }
 
 .user-info-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  box-shadow: none;
 }
 
 .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.user-info-content {
-  padding: 20px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .user-info-details {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
 .info-item {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: baseline;
+  line-height: 1.6;
 }
 
 .info-label {
-  width: 100px;
-  font-weight: bold;
-  color: #606266;
+  color: var(--app-muted, #697586);
 }
 
 .info-value {
-  margin-left: 20px;
-  color: #303133;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.user-actions,
+.dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .user-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  margin-top: 8px;
 }
 
 .dialog-footer {
-  display: flex;
   justify-content: flex-end;
-  gap: 10px;
+}
+
+.user-actions :deep(.el-button),
+.dialog-footer :deep(.el-button) {
+  min-height: 44px;
+  margin-left: 0;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.user-dialog-form :deep(.el-input__wrapper) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.user-dialog-form :deep(.el-form-item__label) {
+  color: #243047;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .info-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .user-actions :deep(.el-button) {
+    flex: 1 1 100%;
+  }
 }
 </style>

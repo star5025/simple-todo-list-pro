@@ -1,6 +1,9 @@
 <template>
-  <el-aside class="sidebar">
+  <el-aside class="sidebar" :aria-label="t('header.navigation')">
     <div class="sidebar-container">
+      <router-link to="/home/list" class="list-link" @click="$emit('navigate')">
+        <el-icon><List /></el-icon>{{ t('todoList.title') }}
+      </router-link>
       <!-- 新增待办按钮 -->
       <div class="add-todo-section">
         <button 
@@ -77,6 +80,7 @@
                   'custom-button--small',
                   timeFilter.field === 'dueTime' ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="timeFilter.field === 'dueTime'"
                 @click="setTimeFilter('dueTime')"
               >
                 {{ t('sidebar.dueTime') }}
@@ -92,6 +96,7 @@
                   'custom-button--small',
                   timeFilter.field === 'createdTime' ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="timeFilter.field === 'createdTime'"
                 @click="setTimeFilter('createdTime')"
               >
                 {{ t('sidebar.createdTime') }}
@@ -107,6 +112,7 @@
                   'custom-button--small',
                   timeFilter.field === 'startTime' ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="timeFilter.field === 'startTime'"
                 @click="setTimeFilter('startTime')"
               >
                 {{ t('sidebar.startTime') }}
@@ -128,6 +134,7 @@
                   'custom-button--small',
                   statusFilter === null ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="statusFilter === null"
                 @click="setStatusFilter(null)"
               >
                 {{ t('sidebar.all') }}
@@ -139,6 +146,7 @@
                   'custom-button--small',
                   statusFilter === false ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="statusFilter === false"
                 @click="setStatusFilter(false)"
               >
                 {{ t('sidebar.pending') }}
@@ -150,6 +158,7 @@
                   'custom-button--small',
                   statusFilter === true ? 'custom-button--primary' : 'custom-button--default'
                 ]"
+                :aria-pressed="statusFilter === true"
                 @click="setStatusFilter(true)"
               >
                 {{ t('sidebar.completed') }}
@@ -172,7 +181,8 @@ import {
   Plus,
   Filter,
   User,
-  Star
+  Star,
+  List
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
@@ -180,18 +190,21 @@ import request from '@/utils/request'
 
 const { t } = useI18n()
 const router = useRouter()
+const emit = defineEmits(['navigate'])
+const filterParams = inject('filterParams', ref({}))
+const initialOrder = filterParams.value.orderBy || ''
 
 // 注入更新筛选条件的方法
 const updateFilter = inject('updateFilter', null)
 
 // 时间筛选条件（单选）
 const timeFilter = ref({
-  field: 'dueTime',  // 默认按截止时间排序
-  order: 'asc'       // asc: 从近到远, desc: 从远到近
+  field: initialOrder.replace(/Desc$/, '') || null,
+  order: initialOrder ? (initialOrder.endsWith('Desc') ? 'desc' : 'asc') : null
 })
 
 // 状态筛选
-const statusFilter = ref(false) // null: 全部, false: 未完成, true: 已完成
+const statusFilter = ref(filterParams.value.status ?? null) // null: 全部, false: 未完成, true: 已完成
 
 // 收藏待办相关
 const favouriteTodos = ref([])
@@ -199,10 +212,12 @@ const loadingFavourites = ref(false)
 
 const handleAddTodo = () => {
   router.push('/home/add')
+  emit('navigate')
 }
 
 const handleUserInfo = () => {
   router.push('/home/userinfo')
+  emit('navigate')
 }
 
 // 设置时间筛选条件
@@ -239,6 +254,7 @@ const setStatusFilter = (status) => {
 const applyFilters = () => {
   // 先跳转到待办列表界面
   router.push('/home/list')
+  emit('navigate')
   
   // 构造发送给后端的参数
   const params = {
@@ -268,7 +284,6 @@ const applyFilters = () => {
     console.warn('updateFilter 方法未找到')
   }
   
-  console.log('筛选条件已应用:', params)
 }
 
 // 获取收藏的待办事项
@@ -283,7 +298,6 @@ const fetchFavouriteTodos = async () => {
       orderBy: 'createdTimeDesc' // 按创建时间倒序排列，确保显示最新的收藏
     })
     
-    console.log('获取收藏待办响应:', response)
     
     if (response.code === 1) {
       // 确保favourite字段正确设置
@@ -291,7 +305,6 @@ const fetchFavouriteTodos = async () => {
         ...todo,
         favourite: true // 明确设置为已收藏
       }))
-      console.log('收藏的待办事项:', favouriteTodos.value)
     } else {
       ElMessage.error(response.msg || '获取收藏待办失败')
     }
@@ -325,6 +338,7 @@ const formatDueTime = (dueTime) => {
 // 跳转到待办详情
 const goToTodoDetail = (taskId) => {
   router.push(`/home/todo/${taskId}`)
+  emit('navigate')
 }
 
 // 处理收藏状态变化
@@ -356,201 +370,33 @@ defineExpose({
 </script>
 
 <style scoped>
-.sidebar {
-  width: 240px;
-  min-height: calc(100vh - 140px); /* 增加与header和footer的距离 */
-  background-color: #f5f7fa;
-  padding: 15px;
-  box-sizing: border-box;
-  border-right: 1px solid #e4e7ed;
-  margin: 10px 0; /* 增加上下边距 */
-  border-radius: 8px; /* 添加圆角 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 添加阴影效果 */
-}
-
-.sidebar-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.add-todo-section {
-  padding: 8px 0;
-}
-
-.user-info-section {
-  padding: 8px 0;
-}
-
-.favourite-card,
-.filter-card {
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.favourite-card:hover,
-.filter-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.favourite-header,
-.filter-header {
-  display: flex;
-  align-items: center;
-  font-weight: bold;
-  color: #606266;
-  font-size: 14px;
-}
-
-.favourite-header .el-icon,
-.filter-header .el-icon {
-  margin-right: 6px;
-  font-size: 14px;
-  color: #ffd700;
-}
-
-.favourite-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.favourite-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.favourite-item {
-  padding: 8px 10px;
-  border-radius: 4px;
-  background-color: #ffffff;
-  border: 1px solid #ebeef5;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.favourite-item:hover {
-  background-color: #ecf5ff;
-  border-color: #409eff;
-  transform: translateX(4px);
-}
-
-.favourite-item-name {
-  font-size: 13px;
-  color: #303133;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.favourite-item-due {
-  font-size: 12px;
-  color: #909399;
-}
-
-.loading-container,
-.empty-container {
-  padding: 10px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.filter-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.filter-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.filter-group-label {
-  font-weight: 500;
-  color: #606266;
-  font-size: 13px;
-}
-
-.filter-button {
-  width: 100%;
-  min-height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 12px;
-}
-
-/* 自定义按钮样式 */
-.custom-button {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-sizing: border-box;
-  font-size: 13px;
-  padding: 6px 12px;
-  width: 100%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.custom-button--large {
-  padding: 8px 12px;
-  font-size: 14px;
-  max-width: 100%;
-}
-
-.custom-button--small {
-  padding: 4px 8px;
-  font-size: 12px;
-  min-height: 28px;
-  width: 100%;
-}
-
-.custom-button--primary {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: white;
-}
-
-.custom-button--default {
-  background-color: #ffffff;
-  border-color: #dcdfe6;
-  color: #606266;
-}
-
-.custom-button:hover {
-  opacity: 0.8;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.custom-button--primary:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
-}
-
-.custom-button--default:hover {
-  background-color: #f5f7fa;
-  border-color: #c6e2ff;
-  color: #409eff;
-}
+.sidebar { width: 248px; flex: 0 0 248px; padding: 28px 20px; background: var(--app-surface); border-right: 1px solid var(--app-border); overflow: visible; }
+.sidebar-container { display: flex; flex-direction: column; gap: 16px; }
+.list-link { display: flex; align-items: center; gap: 10px; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; padding: 10px 12px; min-height: 44px; }
+.list-link.router-link-active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
+.list-link:hover { background: var(--app-bg); }
+.user-info-section .custom-button { background: white; color: var(--app-muted); border-color: var(--app-border); }
+.favourite-card, .filter-card { border: 0; border-radius: 0; }
+.sidebar :deep(.el-card__header) { padding: 16px 0 10px; border: 0; }
+.sidebar :deep(.el-card__body) { padding: 0; }
+.favourite-header, .filter-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--app-muted); }
+.favourite-header .el-icon, .filter-header .el-icon { font-size: 15px; }
+.favourite-list { display: flex; flex-direction: column; gap: 4px; }
+.favourite-item { padding: 10px; border-radius: 8px; cursor: pointer; }
+.favourite-item:hover { background: var(--app-bg); }
+.favourite-item-name { font-size: 13px; color: var(--el-text-color-primary); overflow-wrap: anywhere; }
+.favourite-item-due { font-size: 12px; color: var(--app-muted); margin-top: 4px; }
+.empty-container, .loading-container { padding: 12px 8px; }
+.filter-content { display: flex; flex-direction: column; gap: 20px; }
+.filter-group { display: flex; flex-direction: column; gap: 8px; }
+.filter-group-label { color: var(--app-muted); font-size: 12px; }
+.filter-buttons { display: flex; flex-direction: column; gap: 4px; }
+.custom-button { border: 1px solid transparent; border-radius: 8px; cursor: pointer; display: flex; gap: 8px; align-items: center; justify-content: center; min-height: 40px; font-size: 13px; padding: 8px 12px; width: 100%; transition: background .12s ease; }
+.custom-button--large { font-size: 14px; }
+.custom-button--primary { background: var(--el-color-primary); border-color: var(--el-color-primary); color: white; }
+.filter-buttons .custom-button { justify-content: space-between; }
+.filter-buttons .custom-button--primary { background: var(--el-color-primary-light-9); border-color: transparent; color: var(--el-color-primary); }
+.custom-button--default { background: transparent; color: var(--app-muted); }
+.custom-button:hover { filter: brightness(.97); }
+@media (max-width: 760px) { .sidebar { width: 100%; padding: 16px 20px 32px; border: 0; } .custom-button { min-height: 44px; } }
 </style>

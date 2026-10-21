@@ -12,7 +12,6 @@
         ref="todoFormRef" 
         label-position="top"
         @submit.prevent="handleSubmit"
-        @keyup.enter="handleSubmit"
       >
         <el-form-item :label="t('addTodo.taskName')" prop="taskName">
           <el-input 
@@ -36,16 +35,17 @@
           <div class="date-picker-container">
             <el-date-picker
               v-model="todoForm.startTime"
+              :aria-label="t('addTodo.startTime')"
               :type="timePrecision.startTime === 'date' ? 'date' : 'datetime'"
               :placeholder="timePrecision.startTime === 'date' ? t('addTodo.selectStartDate') : t('addTodo.selectStartTime')"
               :format="timePrecision.startTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
               :value-format="timePrecision.startTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
-              style="width: 100%"
+              popper-class="todo-date-popper"
             />
             <el-select 
               v-model="timePrecision.startTime" 
               class="precision-select"
-              size="small"
+              :aria-label="t('addTodo.timePrecision')"
             >
               <el-option :label="t('addTodo.selectStartDate')" value="date"></el-option>
               <el-option :label="t('addTodo.selectStartTime')" value="datetime"></el-option>
@@ -57,16 +57,17 @@
           <div class="date-picker-container">
             <el-date-picker
               v-model="todoForm.dueTime"
+              :aria-label="t('addTodo.dueTime')"
               :type="timePrecision.dueTime === 'date' ? 'date' : 'datetime'"
               :placeholder="timePrecision.dueTime === 'date' ? t('addTodo.selectDueDate') : t('addTodo.selectDueTime')"
               :format="timePrecision.dueTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
               :value-format="timePrecision.dueTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
-              style="width: 100%"
+              popper-class="todo-date-popper"
             />
             <el-select 
               v-model="timePrecision.dueTime" 
               class="precision-select"
-              size="small"
+              :aria-label="t('addTodo.timePrecision')"
             >
               <el-option :label="t('addTodo.selectDueDate')" value="date"></el-option>
               <el-option :label="t('addTodo.selectDueTime')" value="datetime"></el-option>
@@ -78,16 +79,17 @@
           <div class="date-picker-container">
             <el-date-picker
               v-model="todoForm.remindTime"
+              :aria-label="t('addTodo.remindTime')"
               :type="timePrecision.remindTime === 'date' ? 'date' : 'datetime'"
               :placeholder="timePrecision.remindTime === 'date' ? t('addTodo.selectRemindDate') : t('addTodo.selectRemindTime')"
               :format="timePrecision.remindTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
               :value-format="timePrecision.remindTime === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm'"
-              style="width: 100%"
+              popper-class="todo-date-popper"
             />
             <el-select 
               v-model="timePrecision.remindTime" 
               class="precision-select"
-              size="small"
+              :aria-label="t('addTodo.timePrecision')"
             >
               <el-option :label="t('addTodo.selectRemindDate')" value="date"></el-option>
               <el-option :label="t('addTodo.selectRemindTime')" value="datetime"></el-option>
@@ -105,7 +107,7 @@
         <el-form-item>
           <el-button 
             type="primary" 
-            @click="handleSubmit"
+            native-type="submit"
             :loading="submitting"
             style="width: 100%"
           >
@@ -207,10 +209,11 @@ const resetForm = () => {
 }
 
 const handleSubmit = async () => {
-  if (!todoFormRef.value) return
-  
-  await todoFormRef.value.validate(async (valid) => {
-    if (valid) {
+  if (!todoFormRef.value || submitting.value) return
+  submitting.value = true
+  try {
+    await todoFormRef.value.validate(async (valid) => {
+      if (!valid) return
       // 日期值按本地午夜解析，datetime 值按本地时间解析
       const startTimeObj = todoForm.startTime ? parseTaskDate(todoForm.startTime) : null;
       const dueTimeObj = todoForm.dueTime ? parseTaskDate(todoForm.dueTime) : null;
@@ -231,9 +234,6 @@ const handleSubmit = async () => {
         ElMessage.error(t('addTodo.remindTimeError'))
         return
       }
-      
-      // 提交数据到后端
-      submitting.value = true
       
       try {
         // 构造请求数据，使用正确的日期格式
@@ -267,11 +267,11 @@ const handleSubmit = async () => {
       } catch (error) {
         console.error(t('addTodo.networkError'))
         ElMessage.error(t('userInfo.networkError') || t('addTodo.networkError'))
-      } finally {
-        submitting.value = false
       }
-    }
-  })
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 
 // 添加onActivated钩子，处理组件被keep-alive缓存后重新激活的情况
@@ -295,32 +295,65 @@ defineExpose({
 
 <style scoped>
 .add-todo-container {
-  margin-bottom: 20px;
+  min-width: 0;
+  margin-bottom: 24px;
+  color: #243047;
 }
 
 .add-todo-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  box-shadow: none;
 }
 
 .card-header {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: left;
 }
 
-.add-todo-card:hover {
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease-in-out;
+.add-todo-card :deep(.el-form-item__label) {
+  color: #243047;
+  line-height: 1.5;
 }
 
 .date-picker-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
+.date-picker-container :deep(.el-date-editor),
 .precision-select {
-  width: 100px;
+  width: 100%;
+  min-width: 0;
+}
+
+.add-todo-card :deep(.el-input__wrapper),
+.add-todo-card :deep(.el-select__wrapper),
+.add-todo-card :deep(.el-button) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.add-todo-card :deep(.el-textarea__inner) {
+  padding: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .date-picker-container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .precision-select {
+    width: 150px;
+    max-width: 100%;
+  }
 }
 </style>

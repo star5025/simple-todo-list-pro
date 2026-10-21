@@ -73,11 +73,12 @@
               <el-date-picker 
                 v-else
                 v-model="editForm.startTime"
+                :aria-label="t('todoDetail.startTime')"
                 type="datetime"
                 :placeholder="t('todoDetail.selectStartTime')"
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DD HH:mm"
-                style="margin-left: 20px; flex: 1;"
+                popper-class="todo-date-popper"
               />
             </div>
             
@@ -85,14 +86,15 @@
               <div class="time-label">{{ t('todoDetail.dueTime') }}</div>
               <div v-if="!isEditing" class="time-value">{{ todo.dueTime ? formatTime(todo.dueTime) : t('todoDetail.notSet') }}</div>
               <div v-if="!isEditing && todo.dueTime" class="time-remaining">{{ getCountdownText(todo) }}</div>
-              <el-date-picker 
-                v-else
+              <el-date-picker
+                v-if="isEditing"
                 v-model="editForm.dueTime"
+                :aria-label="t('todoDetail.dueTime')"
                 type="datetime"
                 :placeholder="t('todoDetail.selectDueTime')"
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DD HH:mm"
-                style="margin-left: 20px; flex: 1;"
+                popper-class="todo-date-popper"
               />
             </div>
             
@@ -102,11 +104,12 @@
               <el-date-picker 
                 v-else
                 v-model="editForm.remindTime"
+                :aria-label="t('todoDetail.remindTime')"
                 type="datetime"
                 :placeholder="t('todoDetail.selectRemindTime')"
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DD HH:mm"
-                style="margin-left: 20px; flex: 1;"
+                popper-class="todo-date-popper"
               />
             </div>
           </div>
@@ -139,8 +142,11 @@
               </el-button>
             </div>
             <p v-if="scheduleError" class="schedule-error" role="alert">{{ scheduleError }}</p>
-            <p class="repeat-help">{{ t('todoDetail.repeatHelp') }}</p>
-            <p class="repeat-help">{{ t('todoDetail.reminderHelp') }}</p>
+            <details class="repeat-guide">
+              <summary>{{ t('todoDetail.repeatRule') }}</summary>
+              <p class="repeat-help">{{ t('todoDetail.repeatHelp') }}</p>
+              <p class="repeat-help">{{ t('todoDetail.reminderHelp') }}</p>
+            </details>
           </section>
         </div>
       </el-card>
@@ -409,54 +415,45 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 缩短过渡动画时间 */
-.el-fade-in-linear-enter-active {
-  transition: opacity 0.2s linear !important;
-}
-
-.el-fade-in-linear-leave-active {
-  transition: opacity 0.15s linear !important;
-}
-
 .todo-detail-container {
   width: 100%;
+  min-width: 0;
+  color: #243047;
 }
 
 .todo-detail-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  box-shadow: none;
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px 16px;
 }
 
 .header-title {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
+  min-width: 0;
   flex: 1;
-}
-
-.todo-detail-content {
-  padding: 20px 0;
-}
-
-.todo-basic-info {
-  padding: 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .todo-status {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .todo-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #303133;
+  margin: 0 0 20px;
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .todo-title-input {
@@ -464,67 +461,55 @@ onBeforeUnmount(() => {
 }
 
 .todo-description h3 {
-  margin: 20px 0 10px 0;
-  font-size: 18px;
-  color: #606266;
+  margin: 20px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.todo-description p,
+.repeat-help {
+  color: var(--app-muted, #697586);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .todo-description p {
-  color: #606266;
-  line-height: 1.6;
   white-space: pre-wrap;
 }
 
-.todo-time-info {
-  padding: 0 20px;
-}
-
 .time-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
   align-items: center;
-  margin-bottom: 15px;
+  gap: 8px 16px;
+  margin-bottom: 16px;
 }
 
 .time-label {
-  width: 80px;
-  font-weight: bold;
-  color: #606266;
+  color: var(--app-muted, #697586);
 }
 
 .time-value {
-  margin-left: 20px;
-  color: #303133;
-  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .time-remaining {
-  margin-left: 10px;
-  color: #909399;
+  grid-column: 2;
+  color: var(--app-muted, #697586);
   font-size: 14px;
 }
 
-.loading-container,
-.empty-container {
-  padding: 20px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-.empty-container {
+.time-item :deep(.el-date-editor) {
   width: 100%;
-}
-
-.repeat-settings {
-  padding: 0 20px;
+  min-width: 0;
 }
 
 .repeat-settings label {
   display: block;
   margin-bottom: 12px;
-  font-weight: bold;
-  color: #606266;
+  font-weight: 600;
 }
 
 .repeat-controls {
@@ -536,26 +521,64 @@ onBeforeUnmount(() => {
 
 .repeat-controls .el-select {
   width: 180px;
+  max-width: 100%;
 }
 
 .repeat-controls .el-button + .el-button {
   margin-left: 0;
 }
 
+.repeat-guide {
+  margin-top: 16px;
+}
+
+.repeat-guide summary {
+  display: list-item;
+  min-height: 44px;
+  line-height: 44px;
+  cursor: pointer;
+  color: var(--app-muted, #697586);
+}
+
 .repeat-help {
-  color: #606266;
+  margin: 8px 0;
   font-size: 14px;
-  line-height: 1.6;
 }
 
 .schedule-error {
-  color: #f56c6c;
+  color: var(--el-color-danger);
+  overflow-wrap: anywhere;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+.todo-detail-card :deep(.el-button),
+.todo-detail-card :deep(.el-input__wrapper),
+.todo-detail-card :deep(.el-select__wrapper) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.loading-container,
+.empty-container {
+  min-height: 240px;
+}
+
+@media (max-width: 600px) {
+  .time-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .time-remaining {
+    grid-column: 1;
+  }
+
+  .header-title {
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
 }
 </style>

@@ -12,7 +12,7 @@
         <el-select 
           v-model="currentLocale" 
           @change="changeLanguage"
-          size="small"
+          :aria-label="$t('header.language')"
         >
           <el-option 
             v-for="locale in locales" 
@@ -22,17 +22,19 @@
           />
         </el-select>
       </div>
-      <el-form class="register-form" label-position="left" :label-width="80" @keyup.enter="handleRegister">
-        <el-form-item :label="$t('register.username')">
-          <el-input 
+      <el-form class="register-form" label-position="top" @submit.prevent="handleRegister">
+        <el-form-item :label="$t('register.username')" for="register-username">
+          <el-input
+            id="register-username" name="username" autocomplete="username"
             v-model="registerForm.userName"
             :placeholder="$t('register.username')"
             clearable
             class="register-input"
           />
         </el-form-item>
-        <el-form-item :label="$t('register.password')">
-          <el-input 
+        <el-form-item :label="$t('register.password')" for="register-password">
+          <el-input
+            id="register-password" name="password" autocomplete="new-password"
             v-model="registerForm.userPassword"
             type="password"
             :placeholder="$t('register.password')"
@@ -40,8 +42,9 @@
             class="register-input"
           />
         </el-form-item>
-        <el-form-item :label="$t('register.confirmPassword')">
-          <el-input 
+        <el-form-item :label="$t('register.confirmPassword')" for="register-confirm-password">
+          <el-input
+            id="register-confirm-password" name="confirm-password" autocomplete="new-password"
             v-model="registerForm.confirmPassword"
             type="password"
             :placeholder="$t('register.confirmPassword')"
@@ -53,7 +56,8 @@
           <el-button 
             type="primary" 
             class="register-button"
-            @click="handleRegister"
+            native-type="submit"
+            :loading="submitting"
           >
             {{ $t('register.registerButton') }}
           </el-button>
@@ -102,7 +106,10 @@ const changeLanguage = (newLocale) => {
   localStorage.setItem('locale', newLocale)
 }
 
+const submitting = ref(false)
+
 const handleRegister = async () => {
+  if (submitting.value) return
   // 表单验证
   if (!registerForm.value.userName || !registerForm.value.userPassword) {
     ElMessage.error('用户名和密码不能为空')
@@ -114,6 +121,7 @@ const handleRegister = async () => {
     return
   }
   
+  submitting.value = true
   try {
     // 只发送用户名和密码到后端，不发送确认密码
     const requestData = {
@@ -136,6 +144,8 @@ const handleRegister = async () => {
     }
   } catch (error) {
     // request displays the error; do not log Axios config containing the password.
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -146,69 +156,85 @@ const goToLogin = () => {
 
 <style scoped>
 .register-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
+  display: grid;
+  place-items: center;
+  min-height: calc(100svh - 56px);
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: var(--app-bg, #f7f8fa);
+  color: #243047;
 }
 
 .register-card {
   width: 100%;
-  max-width: 400px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease-in-out;
-  position: relative;
+  max-width: 420px;
+  min-width: 0;
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  box-shadow: none;
 }
 
-.register-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
+.register-card :deep(.el-card__header),
+.register-card :deep(.el-card__body) {
+  padding: 24px;
 }
 
 .card-header {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card-header :deep(.el-text) {
+  color: #243047;
+  font-size: inherit;
 }
 
 .language-switch {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-}
-
-.register-form {
-  padding: 20px;
-}
-
-.register-input {
-  width: 100%;
-  transition: all 0.3s ease-in-out;
-}
-
-.register-input:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.1);
-}
-
-.button-form-item {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
 
+.language-switch .el-select {
+  width: 150px;
+  max-width: 100%;
+}
+
+.register-input,
 .register-button {
   width: 100%;
-  margin-top: 10px;
-  max-width: 200px;
+}
+
+.register-card :deep(.el-input__wrapper),
+.register-card :deep(.el-select__wrapper),
+.register-card :deep(.el-button) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.register-card :deep(.el-form-item__label) {
+  color: #243047;
+  line-height: 1.5;
 }
 
 .login-link {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
-  margin-top: 20px;
+  gap: 4px 8px;
+  color: var(--app-muted, #697586);
+}
+
+.login-link :deep(.el-text) {
+  color: inherit;
+}
+
+@media (max-width: 600px) {
+  .register-card :deep(.el-card__header),
+  .register-card :deep(.el-card__body) {
+    padding: 16px;
+  }
 }
 </style>

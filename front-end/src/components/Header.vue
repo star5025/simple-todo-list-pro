@@ -1,132 +1,90 @@
-<!-- 顶栏 -->
 <template>
-    <el-header class="header">
-        <div class="header-container">
-            <div class="name-container">
-                <el-text type="primary" size="large">Simple Todo List</el-text>
-            </div>
-            <div class="avatar-container" @click="goToUserInfo">
-                <el-avatar class="clickable-avatar">{{ displayedUserName.charAt(0).toUpperCase() }}</el-avatar>
-            </div>
-            <div class="username-container" @click="goToUserInfo">
-                <el-text class="clickable-username">{{ displayedUserName }}</el-text>
-            </div>
-            <div class="language-selector">
-                <el-dropdown @command="switchLanguage">
-                    <el-button type="primary" plain>
-                        {{ currentLanguage === 'zh-CN' ? '中文' : 'English' }}
-                        <el-icon class="el-icon--right">
-                            <arrow-down />
-                        </el-icon>
-                    </el-button>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item command="zh-CN">中文</el-dropdown-item>
-                            <el-dropdown-item command="en-US">English</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
-            </div>
-            <div class="button-container">
-                <el-button type="primary" plain @click="handleLogout">{{ t('header.logout') }}</el-button>
-            </div>
-        </div>
-    </el-header>
+  <el-header class="header">
+    <div class="header-container">
+      <button
+        v-if="mobile"
+        class="menu-button"
+        type="button"
+        :aria-label="t('header.navigation')"
+        :aria-expanded="navigationOpen"
+        aria-controls="mobile-navigation"
+        @click="$emit('open-navigation')"
+      ><el-icon><Menu /></el-icon></button>
+      <router-link class="brand" to="/home/list">Simple Todo List <span>Pro</span></router-link>
+      <button class="profile-button" type="button" :aria-label="t('sidebar.userInfo')" @click="goToUserInfo">
+        <el-avatar :size="30">{{ displayedUserName.charAt(0).toUpperCase() }}</el-avatar>
+        <span class="username">{{ displayedUserName }}</span>
+      </button>
+      <el-dropdown @command="switchLanguage">
+        <el-button class="language-button" :aria-label="t('header.language')">
+          {{ currentLanguage === 'zh-CN' ? '中文' : 'EN' }}
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh-CN">中文</el-dropdown-item>
+            <el-dropdown-item command="en-US">English</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-button class="logout-button" @click="handleLogout">{{ t('header.logout') }}</el-button>
+    </div>
+  </el-header>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, Menu } from '@element-plus/icons-vue'
 import { clearUserInfoCache } from '@/utils/user'
 import { useI18n } from 'vue-i18n'
 
+defineProps({ mobile: Boolean, navigationOpen: Boolean })
+defineEmits(['open-navigation'])
 const { t, locale } = useI18n()
 const router = useRouter()
-const displayedUserName = ref('')
+const displayedUserName = ref(localStorage.getItem('userName') || '')
 const currentLanguage = ref(localStorage.getItem('locale') || 'zh-CN')
-
-// 从localStorage获取用户名
-const getUserName = () => {
-  return localStorage.getItem('userName') || '未知用户'
-}
-
-// 初始化显示的用户名
-onMounted(() => {
-  displayedUserName.value = getUserName()
-  
-  // 监听用户名更新事件
-  window.addEventListener('usernameUpdated', handleUsernameUpdate)
-})
-
-// 处理用户名更新事件
-const handleUsernameUpdate = (event) => {
-  displayedUserName.value = event.detail
-}
-
-// 跳转到用户信息页面
-const goToUserInfo = () => {
-  router.push('/home/userinfo')
-}
-
-// 切换语言
-const switchLanguage = (lang) => {
+const handleUsernameUpdate = event => { displayedUserName.value = event.detail }
+onMounted(() => window.addEventListener('usernameUpdated', handleUsernameUpdate))
+onUnmounted(() => window.removeEventListener('usernameUpdated', handleUsernameUpdate))
+const goToUserInfo = () => router.push('/home/userinfo')
+const switchLanguage = lang => {
   locale.value = lang
   currentLanguage.value = lang
   localStorage.setItem('locale', lang)
 }
-
 const handleLogout = () => {
-  // 执行登出逻辑，清除localStorage中的token和userName
   localStorage.removeItem('token')
   localStorage.removeItem('userName')
   localStorage.removeItem('userId')
-  // 清除用户信息缓存
   clearUserInfoCache()
   router.push('/login')
 }
-
-// 组件销毁时移除事件监听器
-onUnmounted(() => {
-  window.removeEventListener('usernameUpdated', handleUsernameUpdate)
-})
 </script>
 
 <style scoped>
-.header {
-    padding: 10px 20px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    background-color: white !important;
-    /* 固定header高度为60px */
-    height: 60px !important;
-    min-height: 60px !important;
-    border: none !important;
+.header { height: 72px; padding: 0 32px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
+.header-container { height: 100%; max-width: 1440px; margin: auto; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand { margin-right: auto; color: var(--el-text-color-primary); text-decoration: none; font-size: 18px; font-weight: 650; letter-spacing: -.5px; white-space: nowrap; }
+.brand span { color: var(--app-muted); font-size: 11px; font-weight: 500; letter-spacing: .4px; margin-left: 4px; }
+.profile-button, .menu-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
+.profile-button:hover, .menu-button:hover { background: var(--app-bg); }
+.username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.profile-button .el-avatar { background: #edf2f8; color: #526580; font-weight: 600; }
+.menu-button { width: 44px; flex: none; font-size: 21px; }
+.language-button, .logout-button { border-color: transparent; background: transparent; color: var(--app-muted); }
+@media (max-width: 760px) {
+  .header { height: auto; min-height: 64px; padding: 8px 12px; }
+  .header-container { gap: 4px; flex-wrap: wrap; }
+  .brand { font-size: 16px; }
+  .profile-button { padding: 4px; }
+  .username { display: none; }
+  .language-button { padding: 8px; }
+  .logout-button { padding: 8px; font-size: 12px; }
 }
-
-.header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 8px;
-    background-color: white;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-}
-
-.name-container {
-    flex: 1;
-}
-
-.avatar-container, .username-container, .language-selector, .button-container {
-    margin-left: 15px;
-}
-
-.clickable-avatar {
-    cursor: pointer;
-}
-
-.clickable-username {
-    cursor: pointer;
+@media (max-width: 380px) {
+  .brand span { display: none; }
+  .brand { font-size: 14px; }
 }
 </style>

@@ -4,17 +4,19 @@
       <template #header>
         <div class="card-header">
           <div class="header-left">
+            <h1 class="list-title">{{ t('todoList.title') }} <span class="task-count">({{ total }})</span></h1>
+          </div>
+          <div class="header-right">
             <el-switch
               v-model="showDateGroups"
               :active-text="showDateGroups ? t('todoList.showDate') : t('todoList.hideDate')"
               inactive-text=""
+              :aria-label="t('todoList.showDate')"
               @change="handleDateGroupToggle"
             />
-          </div>
-          <div class="header-right">
             <el-button 
               v-if="!batchMode"
-              type="danger" 
+              plain
               :icon="Delete" 
               @click="toggleBatchMode"
             >
@@ -22,7 +24,7 @@
             </el-button>
             <el-button 
               v-else
-              type="danger" 
+              plain
               :icon="DeleteFilled" 
               @click="toggleBatchMode"
             >
@@ -57,16 +59,25 @@
               :key="todo.taskId" 
               class="todo-item"
               :class="{ 'completed': todo.status, 'selected': batchMode && selectedTodoIds.includes(todo.taskId), 'batch-mode': batchMode }"
+              :role="batchMode ? 'checkbox' : 'link'"
+              :aria-checked="batchMode ? selectedTodoIds.includes(todo.taskId) : undefined"
+              :aria-label="todo.taskName"
+              tabindex="0"
+              @keydown="handleTodoKeydown($event, todo)"
               @click="handleTodoClick(todo)"
             >
               <div class="todo-info">
                 <el-checkbox 
                   v-if="!batchMode"
-                  :model-value="todo.status" 
+                  :model-value="todo.status"
+                  :aria-label="todo.taskName"
                   @change="(val) => updateTodoStatus(todo, val)"
                   @click.stop
                   class="todo-checkbox"
                 />
+                <span v-else class="selection-indicator" aria-hidden="true">
+                  <el-icon v-if="selectedTodoIds.includes(todo.taskId)"><Check /></el-icon>
+                </span>
                 <span 
                   class="todo-name" 
                   :class="{ 'completed-text': todo.status }"
@@ -74,15 +85,17 @@
               </div>
               
               <div class="todo-meta">
-                <el-icon 
+                <button
                   v-if="!batchMode"
-                  class="favourite-icon"
+                  type="button"
+                  class="icon-button favourite-icon"
                   :class="{ 'favourited': todo.favourite }"
+                  :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
+                  :aria-pressed="!!todo.favourite"
                   @click.stop="toggleFavourite(todo)"
                 >
-                  <Star v-if="!todo.favourite" />
-                  <StarFilled v-else />
-                </el-icon>
+                  <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
+                </button>
                 <el-tag 
                   :type="getCountdownTagType(todo)" 
                   size="small"
@@ -90,13 +103,15 @@
                 >
                   {{ getCountdownText(todo) }}
                 </el-tag>
-                <el-icon 
+                <button
                   v-if="!batchMode"
-                  class="delete-icon" 
+                  type="button"
+                  class="icon-button delete-icon"
+                  :aria-label="`${t('todoList.delete')}: ${todo.taskName}`"
                   @click.stop="confirmDelete(todo)"
                 >
-                  <Delete />
-                </el-icon>
+                  <el-icon aria-hidden="true"><Delete /></el-icon>
+                </button>
               </div>
             </div>
           </div>
@@ -109,16 +124,25 @@
             :key="todo.taskId" 
             class="todo-item"
             :class="{ 'completed': todo.status, 'selected': batchMode && selectedTodoIds.includes(todo.taskId), 'batch-mode': batchMode }"
+            :role="batchMode ? 'checkbox' : 'link'"
+            :aria-checked="batchMode ? selectedTodoIds.includes(todo.taskId) : undefined"
+            :aria-label="todo.taskName"
+            tabindex="0"
+            @keydown="handleTodoKeydown($event, todo)"
             @click="handleTodoClick(todo)"
           >
             <div class="todo-info">
               <el-checkbox 
                 v-if="!batchMode"
-                :model-value="todo.status" 
+                :model-value="todo.status"
+                :aria-label="todo.taskName"
                 @change="(val) => updateTodoStatus(todo, val)"
                 @click.stop
                 class="todo-checkbox"
               />
+              <span v-else class="selection-indicator" aria-hidden="true">
+                <el-icon v-if="selectedTodoIds.includes(todo.taskId)"><Check /></el-icon>
+              </span>
               <span 
                 class="todo-name" 
                 :class="{ 'completed-text': todo.status }"
@@ -126,15 +150,17 @@
             </div>
             
             <div class="todo-meta">
-              <el-icon 
+              <button
                 v-if="!batchMode"
-                class="favourite-icon"
+                type="button"
+                class="icon-button favourite-icon"
                 :class="{ 'favourited': todo.favourite }"
+                :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
+                :aria-pressed="!!todo.favourite"
                 @click.stop="toggleFavourite(todo)"
               >
-                <Star v-if="!todo.favourite" />
-                <StarFilled v-else />
-              </el-icon>
+                <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
+              </button>
               <el-tag 
                 :type="getCountdownTagType(todo)" 
                 size="small"
@@ -142,13 +168,15 @@
               >
                 {{ getCountdownText(todo) }}
               </el-tag>
-              <el-icon 
+              <button
                 v-if="!batchMode"
-                class="delete-icon" 
+                type="button"
+                class="icon-button delete-icon"
+                :aria-label="`${t('todoList.delete')}: ${todo.taskName}`"
                 @click.stop="confirmDelete(todo)"
               >
-                <Delete />
-              </el-icon>
+                <el-icon aria-hidden="true"><Delete /></el-icon>
+              </button>
             </div>
           </div>
         </template>
@@ -156,11 +184,11 @@
       
       <!-- 批量删除操作栏 -->
       <div v-if="batchMode && selectedTodoIds.length > 0" class="batch-action-bar">
-        <div class="batch-info">
+        <div class="batch-info" role="status">
           {{ t('todoList.selectedItems', [selectedTodoIds.length]) }}
         </div>
         <div class="batch-actions">
-          <el-button type="danger" @click="confirmBatchDelete">{{ t('todoList.delete') }}</el-button>
+          <el-button plain @click="confirmBatchDelete">{{ t('todoList.delete') }}</el-button>
           <el-button @click="cancelBatchMode">{{ t('todoList.cancel') }}</el-button>
         </div>
       </div>
@@ -171,10 +199,22 @@
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50]"
           :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="isMobile ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'"
+          :pager-count="isMobile ? 5 : 7"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
+        <div v-if="isMobile" class="mobile-page-size">
+          <label for="todo-page-size">{{ t('todoList.pageSize') }}</label>
+          <el-select
+            id="todo-page-size"
+            :model-value="pageSize"
+            :aria-label="t('todoList.pageSize')"
+            @change="handleSizeChange"
+          >
+            <el-option v-for="size in [10, 20, 50]" :key="size" :label="String(size)" :value="size" />
+          </el-select>
+        </div>
       </div>
     </el-card>
   </div>
@@ -185,12 +225,14 @@ import { ref, onMounted, inject, watch, computed, onActivated, onUnmounted, next
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
+import { Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
+const isMobile = useMediaQuery('(max-width: 1100px)')
 
 // 数据相关
 const todos = ref([])
@@ -343,7 +385,7 @@ const handleKeydown = (event) => {
     cancelBatchMode()
   }
   // Enter键触发确认删除对话框
-  else if (event.key === 'Enter' && selectedTodoIds.value.length > 0) {
+  else if (event.key === 'Enter' && event.target === document.body && selectedTodoIds.value.length > 0) {
     event.preventDefault() // 防止表单默认提交行为
     event.stopPropagation() // 阻止事件冒泡
     
@@ -377,6 +419,16 @@ const handleTodoClick = (todo) => {
   } else {
     // 否则进入详情页面
     goToDetail(todo.taskId)
+  }
+}
+
+const handleTodoKeydown = (event, todo) => {
+  // 子控件保留自己的键盘行为，行操作不触发全局批量删除快捷键。
+  if (event.target !== event.currentTarget) return
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    event.stopPropagation()
+    handleTodoClick(todo)
   }
 }
 
@@ -627,6 +679,7 @@ const confirmDelete = (todo) => {
     t('todoList.deleteConfirmation'),
     {
       confirmButtonText: t('todoList.delete'),
+      confirmButtonClass: 'el-button--danger',
       cancelButtonText: t('todoList.cancel'),
       type: 'warning',
     }
@@ -649,6 +702,7 @@ const confirmBatchDelete = () => {
     t('todoList.batchDeleteConfirmation'),
     {
       confirmButtonText: t('todoList.batchDelete'),
+      confirmButtonClass: 'el-button--danger',
       cancelButtonText: t('todoList.cancel'),
       type: 'warning',
     }
@@ -780,168 +834,268 @@ onMounted(() => {
 <style scoped>
 .todo-list-container {
   width: 100%;
+  min-width: 0;
 }
 
 .todo-list-card {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+  border-color: var(--app-border, #e7ebf0);
 }
 
-.card-header {
+.card-header,
+.header-right,
+.batch-action-bar,
+.batch-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.header-left {
-  flex: 1;
+.card-header,
+.batch-action-bar {
+  justify-content: space-between;
 }
 
+.header-left,
 .header-right {
-  font-weight: bold;
-  color: #606266;
+  min-width: 0;
 }
 
-.date-group {
-  margin-bottom: 20px;
+.list-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-.date-group:last-child {
-  margin-bottom: 0;
+.task-count,
+.date-title,
+.batch-info {
+  color: var(--app-muted, #697586);
+}
+
+.task-count {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.header-right :deep(.el-button),
+.batch-actions :deep(.el-button) {
+  margin-left: 0;
+}
+
+.date-group + .date-group {
+  margin-top: 24px;
 }
 
 .date-header {
   padding: 10px 0;
-  border-bottom: 2px solid #409eff;
-  margin-bottom: 10px;
+  border-bottom: 1px solid var(--app-border, #e7ebf0);
 }
 
 .date-title {
-  font-weight: bold;
-  color: #409eff;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .todo-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  padding: 15px 10px;
-  border-bottom: 1px solid #eee;
-  transition: all 0.3s ease;
-  position: relative;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--app-border, #e7ebf0);
+  cursor: pointer;
 }
 
 .todo-item:hover {
-  background-color: #f5f7fa;
-  transform: scale(1.01);
+  background: #f8fafc;
 }
 
-.todo-item:last-child {
-  border-bottom: none;
+.todo-item:focus-visible,
+.icon-button:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
 }
 
 .todo-item.selected {
-  background-color: #ffffff; /* 使用正常白色背景 */
-  border-left: 3px solid #409eff;
-}
-
-/* 批量模式下未选中的待办事项使用更明显的灰色调 */
-.todo-item:not(.selected).batch-mode {
-  background-color: #f0f0f0;
-  opacity: 1; /* 移除透明度，使用更明确的背景色 */
+  background: var(--el-color-primary-light-9);
 }
 
 .todo-info {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  flex: 1;
+  gap: 12px;
+  min-width: 0;
 }
 
 .todo-checkbox {
-  margin-right: 12px;
+  margin-right: 0;
 }
 
-.batch-select-checkbox {
-  margin-right: 12px;
+.selection-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--app-muted, #697586);
+  border-radius: 3px;
+}
+
+.selected .selection-indicator {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary);
+  color: #fff;
 }
 
 .todo-name {
-  font-size: 16px;
-  color: #303133;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .completed-text {
   text-decoration: line-through;
-  color: #909399 !important;
+  color: var(--app-muted, #697586);
 }
 
 .todo-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
 }
 
-.favourite-icon {
-  margin-right: 10px;
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--app-muted, #697586);
+  font: inherit;
   cursor: pointer;
-  color: #c0c4cc;
-  font-size: 16px;
 }
 
+.icon-button:hover,
 .favourite-icon.favourited {
-  color: #ffd700;
-}
-
-.delete-icon {
-  margin-left: 10px;
-  cursor: pointer;
-  color: #909399;
-  font-size: 16px;
-}
-
-.delete-icon:hover {
-  color: #f56c6c;
+  color: var(--el-color-primary);
 }
 
 .countdown-tag {
-  margin-left: 10px;
+  height: auto;
+  max-width: 100%;
+  padding: 4px 8px;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .pagination-container {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 24px;
 }
 
 .loading-container,
 .empty-container {
-  padding: 20px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-.empty-container {
-  width: 100%;
+  padding: 24px 0;
+  min-height: 240px;
 }
 
 .batch-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background-color: #f5f7fa;
-  border-top: 1px solid #ebeef5;
-  border-bottom: 1px solid #ebeef5;
+  margin-top: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--app-border, #e7ebf0);
 }
 
-.batch-info {
-  font-weight: bold;
-  color: #606266;
+@media (max-width: 760px) {
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .todo-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .todo-meta {
+    padding-left: 30px;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .todo-checkbox {
+    min-height: 44px;
+  }
+
 }
 
-.batch-actions {
-  display: flex;
-  gap: 10px;
+@media (max-width: 1100px) {
+  .pagination-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination-container :deep(.el-pagination) {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .pagination-container :deep(.el-pager) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .pagination-container :deep(.el-pager li),
+  .pagination-container :deep(.btn-prev),
+  .pagination-container :deep(.btn-next) {
+    min-width: 44px;
+    height: 44px;
+    margin: 0;
+  }
+
+  .mobile-page-size {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    color: var(--app-muted, #697586);
+  }
+
+  .mobile-page-size :deep(.el-select) {
+    width: 88px;
+  }
+
+  .mobile-page-size :deep(.el-select__wrapper) {
+    min-height: 44px;
+  }
 }
 </style>

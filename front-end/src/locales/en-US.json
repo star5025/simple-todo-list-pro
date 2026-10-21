@@ -22,6 +22,8 @@
     "en": "English"
   },
   "header": {
+    "navigation": "Navigation & filters",
+    "language": "Switch language",
     "logout": "Logout"
   },
   "sidebar": {
@@ -40,6 +42,7 @@
     "completed": "Completed"
   },
   "addTodo": {
+    "timePrecision": "Time precision",
     "title": "Add New Todo",
     "taskName": "Task Name",
     "enterTaskName": "Please enter task name",
@@ -98,6 +101,8 @@
     "operationFailed": "Operation failed"
   },
   "todoList": {
+    "title": "Todos",
+    "pageSize": "Items per page",
     "showDate": "Show Date",
     "hideDate": "Hide Date",
     "batchDelete": "Batch Delete",
