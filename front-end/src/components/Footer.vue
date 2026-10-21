@@ -3,7 +3,7 @@
   <el-footer class="footer">
     <div class="footer-content">
       <div class="container version-container">
-        <el-text type="info" size="large">v0.2</el-text>
+        <el-text type="info" size="large">v{{ version }}</el-text>
       </div>
       
       <div class="container authors-container">
@@ -12,16 +12,6 @@
             src="https://www.github.com/star5025.png" 
             alt="star5025" 
             @click="goToStar5025"
-            size="small"
-            class="avatar"
-          />
-        </div>
-        
-        <div class="avatar-container">
-          <el-avatar 
-            src="https://www.github.com/Stevan1707.png" 
-            alt="Stevan1707" 
-            @click="goToStevan1707"
             size="small"
             class="avatar"
           />
@@ -50,16 +40,14 @@
 </template>
 
 <script setup>
-const goToStar5025 = () => {
-  window.open('https://github.com/star5025', '_blank')
-}
+import { version } from '../../package.json'
 
-const goToStevan1707 = () => {
-  window.open('https://github.com/Stevan1707', '_blank')
+const goToStar5025 = () => {
+  window.open('https://github.com/star5025', '_blank', 'noopener,noreferrer')
 }
 
 const goToRepository = () => {
-  window.open('https://github.com/star5025/simple-todo-list', '_blank')
+  window.open('https://github.com/star5025/simple-todo-list-pro', '_blank', 'noopener,noreferrer')
 }
 </script>
 
