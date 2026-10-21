@@ -23,6 +23,7 @@ jobs:
           cache: npm
           cache-dependency-path: front-end/package-lock.json
       - run: npm ci
+      - run: npm test
       - run: npm run build
       - name: Validate Compose configuration
         working-directory: .

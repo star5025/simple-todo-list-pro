@@ -110,6 +110,38 @@
               />
             </div>
           </div>
+
+          <el-divider />
+          <section class="repeat-settings" :aria-label="t('todoDetail.repeatRule')">
+            <label for="repeat-rule">{{ t('todoDetail.repeatRule') }}</label>
+            <div class="repeat-controls">
+              <el-select
+                id="repeat-rule"
+                v-model="repeatRule"
+                :aria-label="t('todoDetail.repeatRule')"
+                :disabled="scheduleLoading || scheduleSaving || !scheduleLoaded"
+                :loading="scheduleLoading"
+              >
+                <el-option v-for="rule in repeatRules" :key="rule" :value="rule" :label="t(`todoDetail.repeat${rule}`)" />
+              </el-select>
+              <el-button
+                type="primary"
+                :loading="scheduleSaving"
+                :disabled="!scheduleLoaded || scheduleLoading || repeatRule === savedRepeatRule"
+                @click="saveSchedule"
+              >{{ t('todoDetail.saveRepeatRule') }}</el-button>
+              <el-button
+                :disabled="!scheduleLoaded || scheduleLoading || scheduleSaving || repeatRule === savedRepeatRule"
+                @click="repeatRule = savedRepeatRule"
+              >{{ t('todoDetail.cancelRepeatRule') }}</el-button>
+              <el-button v-if="scheduleError" :loading="scheduleLoading" @click="fetchSchedule">
+                {{ t('todoDetail.retrySchedule') }}
+              </el-button>
+            </div>
+            <p v-if="scheduleError" class="schedule-error" role="alert">{{ scheduleError }}</p>
+            <p class="repeat-help">{{ t('todoDetail.repeatHelp') }}</p>
+            <p class="repeat-help">{{ t('todoDetail.reminderHelp') }}</p>
+          </section>
         </div>
       </el-card>
       
@@ -159,7 +191,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -173,6 +205,65 @@ const { t } = useI18n()
 const todo = ref(null)
 const loading = ref(false)
 const isEditing = ref(false)
+const repeatRules = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY']
+const repeatRule = ref('NONE')
+const savedRepeatRule = ref('NONE')
+const scheduleLoaded = ref(false)
+const scheduleLoading = ref(false)
+const scheduleSaving = ref(false)
+const scheduleError = ref('')
+const taskId = route.params.id
+let disposed = false
+
+const fetchSchedule = async () => {
+  if (!taskId || disposed || scheduleLoading.value || scheduleSaving.value) return
+  scheduleLoading.value = true
+  scheduleLoaded.value = false
+  scheduleError.value = ''
+  try {
+    const response = await request.get(`/task/${taskId}/schedule`)
+    if (disposed) return
+    if (response.code === 1) {
+      repeatRule.value = response.data.repeatRule
+      savedRepeatRule.value = response.data.repeatRule
+      scheduleLoaded.value = true
+    } else {
+      scheduleError.value = response.msg || t('todoDetail.scheduleFetchFailed')
+      ElMessage.error(scheduleError.value)
+    }
+  } catch (error) {
+    if (disposed) return
+    scheduleError.value = t('todoDetail.scheduleFetchFailed')
+    ElMessage.error(scheduleError.value)
+  } finally {
+    if (!disposed) scheduleLoading.value = false
+  }
+}
+
+const saveSchedule = async () => {
+  if (disposed || !scheduleLoaded.value || scheduleLoading.value || scheduleSaving.value) return
+  const rule = repeatRule.value
+  if (rule === savedRepeatRule.value) return
+  scheduleSaving.value = true
+  scheduleError.value = ''
+  try {
+    const response = await request.put(`/task/${taskId}/schedule`, { repeatRule: rule })
+    if (disposed) return
+    if (response.code === 1) {
+      savedRepeatRule.value = rule
+      ElMessage.success(t('todoDetail.scheduleSaveSuccess'))
+    } else {
+      scheduleError.value = response.msg || t('todoDetail.scheduleSaveFailed')
+      ElMessage.error(scheduleError.value)
+    }
+  } catch (error) {
+    if (disposed) return
+    scheduleError.value = t('todoDetail.scheduleSaveFailed')
+    ElMessage.error(scheduleError.value)
+  } finally {
+    if (!disposed) scheduleSaving.value = false
+  }
+}
 
 // 编辑表单
 const editForm = reactive({
@@ -195,6 +286,7 @@ const fetchTodoDetail = async () => {
   loading.value = true
   try {
     const response = await request.get(`/task/${taskId}`)
+    if (disposed) return
     if (response.code === 1) {
       todo.value = response.data
       // 初始化编辑表单
@@ -203,9 +295,9 @@ const fetchTodoDetail = async () => {
       ElMessage.error(response.msg || t('todoDetail.fetchFailed'))
     }
   } catch (error) {
-    ElMessage.error(t('userInfo.operationFailed') || t('todoDetail.fetchFailed'))
+    if (!disposed) ElMessage.error(t('userInfo.operationFailed') || t('todoDetail.fetchFailed'))
   } finally {
-    loading.value = false
+    if (!disposed) loading.value = false
   }
 }
 
@@ -291,6 +383,7 @@ const saveEdit = async () => {
     
     // 发送完整数据对象
     const response = await request.patch(`/task/${taskId}`, requestData)
+    if (disposed) return
     
     if (response.code === 1) {
       ElMessage.success(t('todoDetail.updateSuccess'))
@@ -301,13 +394,17 @@ const saveEdit = async () => {
       ElMessage.error(response.msg || t('todoDetail.updateFailed'))
     }
   } catch (error) {
-    ElMessage.error(t('userInfo.operationFailed') || t('todoDetail.updateFailed'))
+    if (!disposed) ElMessage.error(t('userInfo.operationFailed') || t('todoDetail.updateFailed'))
   }
 }
 
 // 组件挂载时获取数据
 onMounted(() => {
   fetchTodoDetail()
+  fetchSchedule()
+})
+onBeforeUnmount(() => {
+  disposed = true
 })
 </script>
 
@@ -417,6 +514,42 @@ onMounted(() => {
 
 .empty-container {
   width: 100%;
+}
+
+.repeat-settings {
+  padding: 0 20px;
+}
+
+.repeat-settings label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #606266;
+}
+
+.repeat-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.repeat-controls .el-select {
+  width: 180px;
+}
+
+.repeat-controls .el-button + .el-button {
+  margin-left: 0;
+}
+
+.repeat-help {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.schedule-error {
+  color: #f56c6c;
 }
 
 .form-actions {

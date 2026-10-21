@@ -3,7 +3,7 @@
     "title": "Simple Todo List",
     "username": "Username",
     "password": "Password",
-    "rememberMe": "Remember me",
+    "rememberMe": "Remember username",
     "loginButton": "Login",
     "noAccount": "Don't have an account?",
     "registerNow": "Register Now"
@@ -137,7 +137,27 @@
     "batchDelete": "Batch Delete",
     "delete": "Delete"
   },
+  "reminders": {
+    "title": "Todo reminder",
+    "message": "You have a todo to take care of: {taskName}",
+    "fetchFailed": "Failed to fetch reminders",
+    "ackFailed": "Failed to acknowledge reminder",
+    "retryFailed": "Reminder delivery failed; it will be retried automatically"
+  },
   "todoDetail": {
+    "repeatRule": "Repeat rule",
+    "repeatNONE": "Does not repeat",
+    "repeatDAILY": "Daily",
+    "repeatWEEKLY": "Weekly",
+    "repeatMONTHLY": "Monthly",
+    "saveRepeatRule": "Save repeat rule",
+    "cancelRepeatRule": "Cancel changes",
+    "retrySchedule": "Reload repeat rule",
+    "scheduleFetchFailed": "Failed to load repeat rule. Please retry.",
+    "scheduleSaveFailed": "Failed to save repeat rule. Please retry.",
+    "scheduleSaveSuccess": "Repeat rule saved",
+    "repeatHelp": "Completing a repeating todo creates its next future occurrence, using the due time, reminder time, then start time as the date anchor in that order. Dates advance from the previous occurrence, skipping missed periods. Each original task creates at most one next occurrence; reopening a completed task does not undo the generated task. Save the repeat rule separately. Recurrence uses the UTC calendar and does not preserve local wall-clock time across daylight-saving changes.",
+    "reminderHelp": "Reminders are stored on the server and checked about every 15 seconds while you are signed in with this page open. There are no system push notifications after closing the page or browser; unacknowledged due reminders are delivered when you return. Delivery is at least once: network failures or multiple active devices may cause duplicates, with no cross-device exactly-once guarantee.",
     "back": "Back",
     "edit": "Edit",
     "save": "Save",

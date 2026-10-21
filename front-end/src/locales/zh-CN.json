@@ -3,7 +3,7 @@
     "title": "Simple Todo List",
     "username": "用户名",
     "password": "密码",
-    "rememberMe": "记住我",
+    "rememberMe": "记住用户名",
     "loginButton": "登录",
     "noAccount": "还没有账号？",
     "registerNow": "立即注册"
@@ -137,7 +137,27 @@
     "batchDelete": "批量删除",
     "delete": "删除"
   },
+  "reminders": {
+    "title": "待办提醒",
+    "message": "您有一个待办事项需要处理：{taskName}",
+    "fetchFailed": "获取提醒失败",
+    "ackFailed": "确认提醒失败",
+    "retryFailed": "提醒处理失败，将自动重试"
+  },
   "todoDetail": {
+    "repeatRule": "重复规则",
+    "repeatNONE": "不重复",
+    "repeatDAILY": "每天",
+    "repeatWEEKLY": "每周",
+    "repeatMONTHLY": "每月",
+    "saveRepeatRule": "保存重复规则",
+    "cancelRepeatRule": "取消更改",
+    "retrySchedule": "重新加载规则",
+    "scheduleFetchFailed": "加载重复规则失败，请重试。",
+    "scheduleSaveFailed": "保存重复规则失败，请重试。",
+    "scheduleSaveSuccess": "重复规则已保存",
+    "repeatHelp": "完成重复待办时会自动生成未来的下一期，以截止时间、提醒时间、开始时间依次优先作为日期锚点，按上期日期推进并跳过已错过的周期。每个原任务最多生成一个下一期；重新打开已完成任务不会撤销已生成的任务。重复规则需单独保存；按UTC日历计算，不保证跨夏令时仍保持当地钟点。",
+    "reminderHelp": "提醒保存在服务器上，登录且页面打开时约每 15 秒检查一次。关闭页面或浏览器后无系统推送，重新打开会补投尚未确认的到期提醒。提醒采用至少一次投递；网络失败或多设备同时在线时可能重复，不保证跨设备仅提醒一次。",
     "back": "返回",
     "edit": "编辑",
     "save": "保存",

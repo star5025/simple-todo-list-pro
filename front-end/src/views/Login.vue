@@ -87,10 +87,10 @@ onMounted(() => {
     try {
       const credentials = JSON.parse(savedCredentials)
       loginForm.value.userName = credentials.userName || ''
-      loginForm.value.userPassword = credentials.userPassword || ''
+      localStorage.setItem('rememberedCredentials', JSON.stringify({ userName: loginForm.value.userName }))
       rememberMe.value = true
     } catch (e) {
-      console.error('解析记住的凭据时出错:', e)
+      localStorage.removeItem('rememberedCredentials')
     }
   }
 })
@@ -118,18 +118,14 @@ async function login() {
       userPassword: loginForm.value.userPassword
     };
     
-    console.log('发送登录请求:', loginData);
-    
     const res = await request.post('/user/login', loginData)
-    console.log('登录响应:', res);
     
     // 注意：现在业务逻辑错误不会进入catch块，而是正常返回
     if (res.code === 1) {
       // 如果用户选择了"记住我"，则保存凭据
       if (rememberMe.value) {
         const credentials = {
-          userName: loginForm.value.userName,
-          userPassword: loginForm.value.userPassword
+          userName: loginForm.value.userName
         }
         localStorage.setItem('rememberedCredentials', JSON.stringify(credentials))
       } else {
@@ -164,8 +160,7 @@ async function login() {
       return false
     }
   } catch (e) {
-    console.error('登录失败：', e)
-    ElMessage.error('网络连接失败，请检查网络')
+    // request already reports HTTP/authentication errors without logging credentials.
     return false // 异常时也返回false
   }
 }

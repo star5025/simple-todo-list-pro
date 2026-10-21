@@ -132,6 +132,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import request from '@/utils/request'
+import { parseTaskDate, toTaskDateOnly } from '@/utils/taskDates'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -159,24 +160,21 @@ const todoForm = reactive({
 watch(() => timePrecision.startTime, () => {
   if (todoForm.startTime && timePrecision.startTime === 'date') {
     // 如果是从datetime切换到date，只保留日期部分
-    const date = new Date(todoForm.startTime);
-    todoForm.startTime = date.toISOString().split('T')[0];
+    todoForm.startTime = toTaskDateOnly(todoForm.startTime);
   }
 })
 
 watch(() => timePrecision.dueTime, () => {
   if (todoForm.dueTime && timePrecision.dueTime === 'date') {
     // 如果是从datetime切换到date，只保留日期部分
-    const date = new Date(todoForm.dueTime);
-    todoForm.dueTime = date.toISOString().split('T')[0];
+    todoForm.dueTime = toTaskDateOnly(todoForm.dueTime);
   }
 })
 
 watch(() => timePrecision.remindTime, () => {
   if (todoForm.remindTime && timePrecision.remindTime === 'date') {
     // 如果是从datetime切换到date，只保留日期部分
-    const date = new Date(todoForm.remindTime);
-    todoForm.remindTime = date.toISOString().split('T')[0];
+    todoForm.remindTime = toTaskDateOnly(todoForm.remindTime);
   }
 })
 
@@ -213,41 +211,14 @@ const handleSubmit = async () => {
   
   await todoFormRef.value.validate(async (valid) => {
     if (valid) {
-      // 时间校验逻辑
-      // 如果是日期模式，需要特殊处理
-      let startTimeObj = null;
-      let dueTimeObj = null;
-      let remindTimeObj = null;
-      
-      if (todoForm.startTime) {
-        if (timePrecision.startTime === 'date') {
-          // 日期模式，创建当天的开始时间
-          startTimeObj = new Date(todoForm.startTime);
-        } else {
-          // 时间模式
-          startTimeObj = new Date(todoForm.startTime);
-        }
-      }
-      
-      if (todoForm.dueTime) {
-        if (timePrecision.dueTime === 'date') {
-          // 日期模式，创建当天的结束时间（23:59:59）
-          dueTimeObj = new Date(todoForm.dueTime);
-          dueTimeObj.setHours(23, 59, 59, 999);
-        } else {
-          // 时间模式
-          dueTimeObj = new Date(todoForm.dueTime);
-        }
-      }
-      
-      if (todoForm.remindTime) {
-        if (timePrecision.remindTime === 'date') {
-          // 日期模式，创建当天的开始时间
-          remindTimeObj = new Date(todoForm.remindTime);
-        } else {
-          // 时间模式
-          remindTimeObj = new Date(todoForm.remindTime);
-        }
+      // 日期值按本地午夜解析，datetime 值按本地时间解析
+      const startTimeObj = todoForm.startTime ? parseTaskDate(todoForm.startTime) : null;
+      const dueTimeObj = todoForm.dueTime ? parseTaskDate(todoForm.dueTime) : null;
+      const remindTimeObj = todoForm.remindTime ? parseTaskDate(todoForm.remindTime) : null;
+
+      if (dueTimeObj && timePrecision.dueTime === 'date') {
+        // 截止日期仍取当地当天的结束时间
+        dueTimeObj.setHours(23, 59, 59, 999);
       }
       
       // 校验时间逻辑

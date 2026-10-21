@@ -39,15 +39,17 @@
 </template>
 
 <script setup>
-import { provide, ref, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { provide, ref, onMounted, onBeforeUnmount } from 'vue'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { createReminderPoller } from '@/utils/reminders'
 import { ElNotification } from 'element-plus'
 import Header from '@/components/Header.vue'
 import Sidebar from '@/components/Sidebar.vue'
 import request from '@/utils/request'
 
 const router = useRouter()
-const route = useRoute()
+const { t } = useI18n()
 
 // 创建筛选条件响应式引用，设置默认筛选条件
 const filterParams = ref({
@@ -72,118 +74,44 @@ const goToTodoList = () => {
   router.push('/home/list')
 }
 
-// 定时器引用
-const reminderTimer = ref(null)
-
-// 检查是否有需要提醒的待办事项
-const checkTodaysReminders = async () => {
-  try {
-    // 获取当前时间
-    const now = new Date();
-    
-    console.log('检查提醒时间:', now);
-    
-    // 获取所有未完成的待办事项
-    const response = await request.get('/task/pageQuery', {
-      page: 1,
-      pageSize: 100, // 获取足够多的待办事项
-      status: false
-    });
-    
-    console.log('获取待办事项响应:', response);
-    
-    if (response.code === 1) {
-      const todos = response.data.records;
-      
-      console.log('所有待办事项:', todos);
-      
-      // 筛选出提醒时间已到的待办事项（提醒时间不为空且已到提醒时间）
-      const dueReminders = todos.filter(todo => {
-        if (todo.remindTime) {
-          try {
-            const remindDate = new Date(todo.remindTime);
-            console.log(`待办事项 "${todo.taskName}" 的提醒时间: ${remindDate}, 当前时间: ${now}`);
-            // 判断提醒时间是否已到
-            return remindDate <= now;
-          } catch (e) {
-            console.error('日期解析错误:', e);
-            return false;
-          }
+const sessionToken = localStorage.getItem('token')
+let remindersActive = true
+const reminderPoller = createReminderPoller({
+  isActive: () => remindersActive && !!sessionToken && localStorage.getItem('token') === sessionToken,
+  fetchDue: async () => {
+    const response = await request.get('/reminders/due')
+    if (response.code !== 1) throw new Error(response.msg || t('reminders.fetchFailed'))
+    return response.data
+  },
+  acknowledge: async ({ taskId, revision }) => {
+    const response = await request.post(`/reminders/${taskId}/ack`, { revision })
+    if (response.code !== 1) throw new Error(response.msg || t('reminders.ackFailed'))
+  },
+  notify: (reminder) => {
+    const notification = ElNotification({
+      title: t('reminders.title'),
+      message: t('reminders.message', { taskName: reminder.taskName }),
+      type: 'warning',
+      duration: 0,
+      onClick: () => {
+        if (remindersActive && localStorage.getItem('token') === sessionToken) {
+          router.push(`/home/todo/${reminder.taskId}`)
         }
-        return false;
-      });
-      
-      console.log('已到提醒时间的事项:', dueReminders);
-      
-      // 对每个提醒弹出通知（检查是否已提醒过）
-      dueReminders.forEach(todo => {
-        // 检查是否已经提醒过这个待办事项（避免重复提醒）
-        const reminderKey = `reminder_${todo.taskId}`;
-        const isNotified = localStorage.getItem(reminderKey);
-        console.log(`提醒键: ${reminderKey}, 是否已提醒: ${isNotified}`);
-        
-        if (!isNotified) {
-          ElNotification({
-            title: '待办提醒',
-            message: `您有一个待办事项需要处理：${todo.taskName}`,
-            type: 'warning',
-            duration: 0, // 不自动关闭
-            onClick: () => {
-              // 点击通知跳转到待办详情页
-              router.push(`/home/todo/${todo.taskId}`);
-            }
-          });
-          
-          // 记录已提醒，避免重复提醒
-          localStorage.setItem(reminderKey, 'notified');
-          console.log('已发送提醒通知');
-        }
-      });
-    }
-  } catch (error) {
-    console.error('检查提醒失败:', error);
-  }
-};
+      }
+    })
+    return () => notification.close()
+  },
+  onError: () => console.error(t('reminders.retryFailed'))
+})
 
-// 开始定时检查提醒
-const startReminderChecks = () => {
-  // 立即检查一次
-  checkTodaysReminders();
-  
-  // 每分钟检查一次提醒
-  reminderTimer.value = setInterval(() => {
-    checkTodaysReminders();
-  }, 60000); // 60秒检查一次
-};
+const stopReminders = () => {
+  remindersActive = false
+  reminderPoller.stop()
+}
 
-// 停止定时检查提醒
-const stopReminderChecks = () => {
-  if (reminderTimer.value) {
-    clearInterval(reminderTimer.value);
-    reminderTimer.value = null;
-  }
-};
-
-// 监听路由变化，在路由切换到TodoList时能够正确应用筛选条件
-watch(route, (newRoute) => {
-  if (newRoute.name === 'TodoList') {
-    // 当切换到TodoList页面时，触发一次筛选以确保显示最新数据
-    // 这里我们不重置筛选条件，而是保持当前的筛选状态
-  }
-});
-
-// 组件挂载时检查提醒
-onMounted(() => {
-  // 延迟一段时间再开始检查提醒，确保页面加载完成
-  setTimeout(() => {
-    startReminderChecks();
-  }, 1000);
-});
-
-// 组件卸载时停止检查提醒
-onUnmounted(() => {
-  stopReminderChecks();
-});
+onMounted(() => reminderPoller.start())
+onBeforeRouteLeave(stopReminders)
+onBeforeUnmount(stopReminders)
 </script>
 
 <style scoped>

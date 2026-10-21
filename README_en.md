@@ -6,7 +6,13 @@
 
 Independently evolved from [star5025/simple-todo-list](https://github.com/star5025/simple-todo-list), preserving its commit history and authorship. Baseline: `1f5c8d38df4c7d2c740da52bdc9beb40c11e72c6`. Development does not modify the original repository.
 
-This project is at the environment-initialization stage. CRUD, favorites, filtering, pagination, sorting, i18n and in-page reminders below are inherited features, not new Pro contributions. Reminders require an open page and are not reliable background scheduling. Known object-level authorization and MD5 password-storage issues remain unresolved. **Do not deploy publicly or use real sensitive data.**
+CRUD, favorites, filtering, pagination, sorting, i18n and the original in-page reminder implementation are inherited. Pro adds object-level authorization, user isolation, sensitive-data protection, BCrypt with legacy MD5 login migration, security regression tests, durable reminder acknowledgements and daily/weekly/monthly recurrence.
+
+Reminder state lives on the server. An open page polls approximately every15 seconds and acknowledges after displaying; reopening retrieves unacknowledged reminders. Rescheduling, completion, cancellation or deletion invalidates old reminders. Delivery is at least once, so network interruptions, multiple devices or a failed acknowledgement can cause duplicates. **No system push is sent while the browser is closed.**
+
+Save recurrence rules separately in task details. Completion atomically creates one future successor, skips missed periods and never generates another successor for the same parent. Reopening the parent does not revoke its successor. Short months clamp to their final day while preserving the original day for later months. Dates are stored and transmitted as UTC (responses include Z) and displayed in browser-local time. Recurrence follows the UTC calendar, not a user-specific daylight-saving wall clock.
+
+This is a local development version, not a comprehensive security audit. **Do not deploy publicly or use real sensitive data without further hardening.**
 
 ---
 
@@ -260,9 +266,11 @@ By default, the frontend service will run at http://localhost:5173
 
 # <span id="future-plans">Future Plans</span>
 
-The Pro feature roadmap is not yet selected. Recommended priorities are object-level authorization, password storage and tests, before considering reliable recurring tasks and persistent reminders. The list below is inherited planning, not approved Pro work.
+This iteration implements security fixes, password migration, durable reminders and basic recurrence. Other plans below are inherited and not approved Pro work.
 
-Verification: run `npm ci` and `npm run build` in `front-end`; set the backend environment variables above and run `./mvnw test` (Windows: `.\mvnw.cmd test`). GitHub Actions runs the frontend build, Compose configuration validation and existing backend context test on `development` pushes and PRs. The backend currently has only `contextLoads`, and the frontend has no automated test suite; green CI is not proof of business correctness or security.
+Verification: run `npm ci`, `npm test` and `npm run build` in `front-end`; set the backend environment variables above and run `./mvnw test` (Windows: `.\mvnw.cmd test`). GitHub Actions runs frontend tests/build, Compose validation and backend unit/real-MySQL integration tests on `development` pushes and PRs. Integration fixtures roll back in transactions; never point tests at production. Coverage includes two-account isolation, redaction, password migration, reminder revisions, recurrence idempotence and date boundaries. Green CI is not proof of zero bugs or a complete audit.
+
+Startup idempotently creates the separate `task_schedule` table via `schema.sql`, without rebuilding existing tasks. Legacy accounts upgrade to BCrypt with CAS on successful login; new passwords are limited to72 UTF-8 bytes. Remember username no longer stores passwords, and entering the login page removes passwords from legacy saved records. For the Vue DevTools localStorage issue on Windows/Node25, set `NODE_OPTIONS=--no-experimental-webstorage` only in the current terminal; Node22, as used in CI, is recommended.
 
 - [ ] Frontend appearance beautification
 - [ ] Frontend responsive design, supporting mobile devices

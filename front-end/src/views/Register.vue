@@ -135,8 +135,7 @@ const handleRegister = async () => {
       }
     }
   } catch (error) {
-    console.error('注册失败：', error)
-    ElMessage.error('网络连接失败，请检查网络')
+    // request displays the error; do not log Axios config containing the password.
   }
 }
 
