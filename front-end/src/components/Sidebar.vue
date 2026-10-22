@@ -256,9 +256,11 @@ const setStatusFilter = (status) => {
 
 // 应用筛选条件
 const applyFilters = () => {
-  // 先跳转到待办列表界面
-  router.push('/home/list')
-  emit('navigate')
+  // 仅在非列表页时跳转，避免重复导航造成列表闪动
+  if (router.currentRoute.value.path !== '/home/list') {
+    router.push('/home/list')
+    emit('navigate')
+  }
   
   // 构造发送给后端的参数
   const params = {

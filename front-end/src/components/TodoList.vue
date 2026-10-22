@@ -499,9 +499,11 @@ onActivated(() => {
   })
 })
 
-// 获取待办列表
+// 获取待办列表：仅首次加载显示骨架屏，后续筛选/分页/刷新静默替换，避免闪动
+const firstListLoad = ref(true)
 const fetchTodos = async (filters = {}) => {
-  loading.value = true
+  const showSkeleton = firstListLoad.value
+  if (showSkeleton) loading.value = true
   try {
     // 确保直接使用 currentPage 变量的值
     const params = {
@@ -545,7 +547,10 @@ const fetchTodos = async (filters = {}) => {
     console.error('获取待办列表失败')
     ElMessage.error(t('userInfo.operationFailed') || (t('todoList.fetchFailed') + ': ' + error.message))
   } finally {
-    loading.value = false
+    if (showSkeleton) {
+      loading.value = false
+      firstListLoad.value = false
+    }
   }
 }
 
