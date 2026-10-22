@@ -163,17 +163,7 @@
         </template>
         
         <div class="loading-container">
-          <el-skeleton animated>
-            <template #template>
-              <el-skeleton-item variant="h3" style="width: 40%" />
-              <div style="margin-top: 20px">
-                <el-skeleton-item variant="text" style="margin-bottom: 16px" />
-                <el-skeleton-item variant="text" style="margin-bottom: 16px" />
-                <el-skeleton-item variant="text" style="margin-bottom: 16px" />
-                <el-skeleton-item variant="text" style="margin-bottom: 16px" />
-              </div>
-            </template>
-          </el-skeleton>
+          <el-icon class="is-loading" :size="30" aria-hidden="true"><Loading /></el-icon>
         </div>
       </el-card>
       
@@ -201,7 +191,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Loading } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -561,6 +551,13 @@ onBeforeUnmount(() => {
 .loading-container,
 .empty-container {
   min-height: 240px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--el-color-primary);
 }
 
 @media (max-width: 600px) {
