@@ -147,7 +147,9 @@
     "message": "您有一个待办事项需要处理：{taskName}",
     "fetchFailed": "获取提醒失败",
     "ackFailed": "确认提醒失败",
-    "retryFailed": "提醒处理失败，将自动重试"
+    "retryFailed": "提醒处理失败，将自动重试",
+    "stackTitle": "待办提醒",
+    "clearAll": "清除全部"
   },
   "dashboard": {
     "title": "数据看板",

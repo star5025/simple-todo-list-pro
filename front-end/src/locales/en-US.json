@@ -147,7 +147,9 @@
     "message": "You have a todo to take care of: {taskName}",
     "fetchFailed": "Failed to fetch reminders",
     "ackFailed": "Failed to acknowledge reminder",
-    "retryFailed": "Reminder delivery failed; it will be retried automatically"
+    "retryFailed": "Reminder delivery failed; it will be retried automatically",
+    "stackTitle": "Reminders",
+    "clearAll": "Clear all"
   },
   "dashboard": {
     "title": "Dashboard",

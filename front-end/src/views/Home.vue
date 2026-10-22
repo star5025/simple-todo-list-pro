@@ -19,6 +19,13 @@
         </div>
       </el-main>
     </el-container>
+
+    <ReminderPanel
+      v-if="reminders.length"
+      :reminders="reminders"
+      @open="openReminder"
+      @clear="reminders = []"
+    />
     
   </el-container>
 </template>
@@ -29,9 +36,9 @@ import { onBeforeRouteLeave, useRouter, useRoute } from 'vue-router'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 import { createReminderPoller } from '@/utils/reminders'
-import { ElNotification } from 'element-plus'
 import Header from '@/components/Header.vue'
 import Sidebar from '@/components/Sidebar.vue'
+import ReminderPanel from '@/components/ReminderPanel.vue'
 import request from '@/utils/request'
 
 const router = useRouter()
@@ -59,6 +66,15 @@ provide('updateFilter', updateFilter)
 
 const sessionToken = localStorage.getItem('token')
 let remindersActive = true
+const reminders = ref([])
+
+const openReminder = reminder => {
+  reminders.value = reminders.value.filter(item => item.key !== reminder.key)
+  if (remindersActive && localStorage.getItem('token') === sessionToken) {
+    router.push(`/home/todo/${reminder.taskId}`)
+  }
+}
+
 const reminderPoller = createReminderPoller({
   isActive: () => remindersActive && !!sessionToken && localStorage.getItem('token') === sessionToken,
   fetchDue: async () => {
@@ -71,18 +87,16 @@ const reminderPoller = createReminderPoller({
     if (response.code !== 1) throw new Error(response.msg || t('reminders.ackFailed'))
   },
   notify: (reminder) => {
-    const notification = ElNotification({
-      title: t('reminders.title'),
-      message: t('reminders.message', { taskName: reminder.taskName }),
-      type: 'warning',
-      duration: 0,
-      onClick: () => {
-        if (remindersActive && localStorage.getItem('token') === sessionToken) {
-          router.push(`/home/todo/${reminder.taskId}`)
-        }
-      }
-    })
-    return () => notification.close()
+    // 聚合到可翻阅的提醒面板，而不是逐个弹出通知。
+    const key = `${reminder.taskId}:${reminder.revision}`
+    if (!reminders.value.some(item => item.key === key)) {
+      reminders.value.push({ key, taskId: reminder.taskId, taskName: reminder.taskName, acked: false })
+    }
+    // ack 完成后标记该条为已确认，保留在面板中供翻阅。
+    return () => {
+      const item = reminders.value.find(entry => entry.key === key)
+      if (item) item.acked = true
+    }
   },
   onError: () => console.error(t('reminders.retryFailed'))
 })
