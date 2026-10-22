@@ -66,6 +66,43 @@ test('failed login does not log the request error containing credentials', async
   assert(!page.storage.has('token'))
 })
 
+function requestInterceptors() {
+  let success, failure
+  const messages = [], redirects = [], removed = []
+  const source = fs.readFileSync(new URL('../src/utils/request.js', import.meta.url), 'utf8')
+    .replace(/^import .* from .*$/gm, '')
+    .replace('import.meta.env.VITE_API_URL', "''")
+    .replace('export default', 'globalThis.request =')
+  vm.runInNewContext(source, {
+    axios: { create: () => ({ interceptors: { request: { use() {} }, response: { use: (ok, fail) => { success = ok; failure = fail } } } }) },
+    router: { replace: path => redirects.push(path) },
+    ElMessage: { error: text => messages.push(text) },
+    localStorage: { removeItem: key => removed.push(key) }
+  })
+  return { success, failure, messages, redirects, removed }
+}
+
+for (const businessCode of [false, true]) {
+  test(`login 401 reports credential error without redirect (businessCode=${businessCode})`, async () => {
+    const h = requestInterceptors()
+    const config = { url: '/user/login' }, data = { code: 401, msg: '用户名或密码错误' }
+    await assert.rejects(businessCode
+      ? h.success({ config, data })
+      : h.failure({ config, message: 'HTTP 401', response: { status: 401, data } }))
+    assert.deepEqual(h.messages, ['用户名或密码错误'])
+    assert.deepEqual(h.redirects, [])
+    assert.deepEqual(h.removed, [])
+  })
+}
+
+test('protected endpoint 401 still clears session and redirects to login', async () => {
+  const h = requestInterceptors()
+  await assert.rejects(h.failure({ config: { url: '/task/pageQuery' }, message: 'HTTP 401', response: { status: 401, data: {} } }))
+  assert.deepEqual(h.messages, ['登录已过期，请重新登录'])
+  assert.deepEqual(h.redirects, ['/login'])
+  assert.deepEqual(h.removed, ['token', 'userId', 'userName'])
+})
+
 test('registration does not log errors that may contain request credentials', () => {
   const source = fs.readFileSync(new URL('../src/views/Register.vue', import.meta.url), 'utf8')
   assert(!/console\.(?:log|error)\(/.test(source))

@@ -2,6 +2,8 @@ import axios from 'axios'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
 
+const isLoginRequest = config => /(?:^|\/)user\/login\/?$/.test((config?.url || '').split('?')[0])
+
 const service = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '/api',
     timeout: 10000,
@@ -34,6 +36,10 @@ service.interceptors.response.use(
         if (res.code === 1) {
             return res
         }
+        else if (res.code === 401 && isLoginRequest(response.config)) {
+            ElMessage.error(res.msg || '用户名或密码错误')
+            return Promise.reject(new Error(res.msg || '用户名或密码错误'))
+        }
         else if (res.code === 401) {
             // 业务 code=401（HTTP 状态码 200，但后端提示 Token 过期）
             ElMessage.error(res.msg || '登录已过期，请重新登录')
@@ -56,7 +62,11 @@ service.interceptors.response.use(
         } else if (error.response) {
             // 关键修改：新增 HTTP 状态码处理
             switch (error.response.status) {
-                case 401: // 处理 HTTP 401（后端直接返回 401 状态码）
+                case 401: // 登录凭据错误与已有会话失效分别处理
+                    if (isLoginRequest(error.config || error.response.config)) {
+                        errMsg = error.response.data?.msg || '用户名或密码错误'
+                        break
+                    }
                     errMsg = '登录已过期，请重新登录'
                     localStorage.removeItem('token') // 清除无效 Token
                     localStorage.removeItem('userId')
