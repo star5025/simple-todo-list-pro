@@ -69,11 +69,18 @@ const handleLogout = () => {
 .brand { margin-right: auto; color: var(--el-text-color-primary); text-decoration: none; font-size: 18px; font-weight: 650; letter-spacing: -.5px; white-space: nowrap; }
 .brand span { color: var(--app-muted); font-size: 11px; font-weight: 500; letter-spacing: .4px; margin-left: 4px; }
 .profile-button, .menu-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
-.profile-button:hover, .menu-button:hover { background: var(--app-bg); }
-.username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-.profile-button .el-avatar { background: #edf2f8; color: #526580; font-weight: 600; }
+.profile-button, .menu-button { transition: background-color .15s ease, color .15s ease; }
+.username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--el-text-color-regular); }
+.profile-button .el-avatar { background: var(--app-bg); color: var(--el-color-primary); font-weight: 600; border: 1px solid var(--app-border); }
 .menu-button { width: 44px; flex: none; font-size: 21px; }
 .language-button, .logout-button { border-color: transparent; background: transparent; color: var(--app-muted); }
+@media (hover: hover) {
+  .profile-button:hover, .menu-button:hover { background: var(--app-bg); }
+  .language-button:hover, .logout-button:hover { background: var(--app-bg); border-color: var(--app-border); color: var(--el-text-color-primary); }
+}
+.profile-button:active, .menu-button:active { background: var(--el-color-primary-light-9); }
+.profile-button:focus-visible, .menu-button:focus-visible,
+.language-button:focus-visible, .logout-button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 @media (max-width: 760px) {
   .header { height: auto; min-height: 64px; padding: 8px 12px; }
   .header-container { gap: 4px; flex-wrap: wrap; }

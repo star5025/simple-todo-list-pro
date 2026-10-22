@@ -127,7 +127,10 @@ onMounted(fetchDashboard)
 .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .stat-card { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 18px 16px; display: flex; flex-direction: column; gap: 6px; }
 .stat-label { color: var(--app-muted, #697586); font-size: 13px; }
-.stat-value { font-size: 26px; font-weight: 650; }
+.stat-value { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.4px; }
+.stat-card:first-child .stat-value { color: var(--el-color-primary); }
+.stat-card { transition: border-color .15s ease; }
+@media (hover: hover) { .stat-card:hover { border-color: var(--el-color-primary-light-7); } }
 .panel { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 20px; margin-top: 16px; }
 .panel-title { margin: 0 0 14px; font-size: 16px; font-weight: 600; color: #243047; }
 .attention-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

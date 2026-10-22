@@ -226,8 +226,27 @@ const goToRegister = () => {
 }
 
 .card-header :deep(.el-text) {
-  color: #243047;
+  color: var(--el-text-color-primary);
   font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: -.3px;
+}
+
+.language-switch :deep(.el-select__wrapper) {
+  color: var(--el-text-color-regular);
+  background: var(--app-bg);
+}
+
+.login-input :deep(.el-input__wrapper.is-focus) {
+  outline: 2px solid var(--el-color-primary-light-8);
+  outline-offset: 1px;
+}
+
+.login-button { font-weight: 600; }
+.register-link :deep(.el-button.is-link) { font-weight: 600; }
+.register-link :deep(.el-button.is-link:focus-visible) {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
 }
 
 .language-switch {
@@ -255,7 +274,8 @@ const goToRegister = () => {
 }
 
 .login-card :deep(.el-form-item__label) {
-  color: #243047;
+  color: var(--el-text-color-regular);
+  font-weight: 500;
   line-height: 1.5;
 }
 
