@@ -291,8 +291,12 @@ const applyFilters = () => {
 }
 
 // 获取收藏的待办事项
-const fetchFavouriteTodos = async () => {
-  loadingFavourites.value = true
+const firstFavouriteLoad = ref(true)
+let favouriteRefreshTimer = null
+
+const fetchFavouriteTodos = async (silent = false) => {
+  const showSkeleton = !silent && firstFavouriteLoad.value
+  if (showSkeleton) loadingFavourites.value = true
   try {
     // 获取用户收藏的待办事项，最多显示5个
     const response = await request.get('/task/pageQuery', {
@@ -301,7 +305,6 @@ const fetchFavouriteTodos = async () => {
       favourite: true,
       orderBy: 'createdTimeDesc' // 按创建时间倒序排列，确保显示最新的收藏
     })
-    
     
     if (response.code === 1) {
       // 确保favourite字段正确设置
@@ -315,7 +318,10 @@ const fetchFavouriteTodos = async () => {
   } catch (error) {
     console.error('获取收藏待办失败')
   } finally {
-    loadingFavourites.value = false
+    if (showSkeleton) {
+      loadingFavourites.value = false
+      firstFavouriteLoad.value = false
+    }
   }
 }
 
@@ -345,12 +351,12 @@ const goToTodoDetail = (taskId) => {
   emit('navigate')
 }
 
-// 处理收藏状态变化
-const handleFavouriteChange = (event) => {
-  // 延迟一小段时间再重新获取收藏列表，确保数据库操作已完成
-  setTimeout(() => {
-    fetchFavouriteTodos()
-  }, 300)
+// 处理收藏状态变化：合并连续操作，静默刷新，避免骨架屏闪烁
+const handleFavouriteChange = () => {
+  window.clearTimeout(favouriteRefreshTimer)
+  favouriteRefreshTimer = window.setTimeout(() => {
+    fetchFavouriteTodos(true)
+  }, 400)
 }
 
 // 组件挂载时应用一次筛选条件并获取收藏待办
@@ -365,6 +371,7 @@ onMounted(() => {
 // 组件卸载时移除事件监听
 onUnmounted(() => {
   window.removeEventListener('favouriteChanged', handleFavouriteChange)
+  window.clearTimeout(favouriteRefreshTimer)
 })
 
 // 暴露方法给父组件

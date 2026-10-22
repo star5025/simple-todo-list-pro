@@ -8,7 +8,7 @@
       <button class="clear-button" type="button" @click="$emit('clear')">{{ t('reminders.clearAll') }}</button>
     </div>
     <ol class="reminder-list">
-      <li v-for="reminder in reminders" :key="reminder.key">
+      <li v-for="reminder in visibleReminders" :key="reminder.key">
         <button
           class="reminder-item"
           type="button"
@@ -20,16 +20,29 @@
         </button>
       </li>
     </ol>
+    <button
+      v-if="reminders.length > visibleLimit"
+      class="toggle-button"
+      type="button"
+      @click="showAll = !showAll"
+    >
+      {{ showAll ? t('reminders.showLess') : t('reminders.showMore', [reminders.length - visibleLimit]) }}
+    </button>
   </aside>
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { Bell, BellFilled, CircleCheck } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
-defineProps({ reminders: { type: Array, required: true } })
+const props = defineProps({ reminders: { type: Array, required: true } })
 defineEmits(['open', 'clear'])
 const { t } = useI18n()
+const visibleLimit = 8
+const showAll = ref(false)
+watch(() => props.reminders.length, length => { if (length <= visibleLimit) showAll.value = false })
+const visibleReminders = computed(() => showAll.value ? props.reminders : props.reminders.slice(0, visibleLimit))
 </script>
 
 <style scoped>
@@ -63,6 +76,11 @@ const { t } = useI18n()
 .clear-button { border: 0; background: transparent; color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; min-height: 36px; padding: 0 8px; border-radius: 8px; }
 .clear-button:hover { color: var(--el-color-primary); background: rgba(64, 158, 255, 0.08); }
 .reminder-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
+.toggle-button { width: 100%; min-height: 40px; border: 0; border-top: 1px solid var(--app-border, #e7ebf0); background: transparent; color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; }
+.toggle-button:hover { color: var(--el-color-primary); }
+@media (max-width: 760px) {
+  .reminder-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; max-height: 50vh; }
+}
 .reminder-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; border-radius: 8px; cursor: pointer; color: #243047; font-size: 14px; text-align: left; }
 .reminder-item:hover { background: var(--app-bg, #f7f8fa); }
 .reminder-item.acked .item-name { color: var(--app-muted, #697586); }

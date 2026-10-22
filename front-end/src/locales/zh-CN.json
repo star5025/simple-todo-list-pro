@@ -149,7 +149,9 @@
     "ackFailed": "确认提醒失败",
     "retryFailed": "提醒处理失败，将自动重试",
     "stackTitle": "待办提醒",
-    "clearAll": "清除全部"
+    "clearAll": "清除全部",
+    "showMore": "还有 {0} 条",
+    "showLess": "收起"
   },
   "dashboard": {
     "title": "数据看板",

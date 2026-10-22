@@ -149,7 +149,9 @@
     "ackFailed": "Failed to acknowledge reminder",
     "retryFailed": "Reminder delivery failed; it will be retried automatically",
     "stackTitle": "Reminders",
-    "clearAll": "Clear all"
+    "clearAll": "Clear all",
+    "showMore": "{0} more",
+    "showLess": "Show less"
   },
   "dashboard": {
     "title": "Dashboard",
