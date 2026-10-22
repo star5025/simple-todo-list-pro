@@ -43,11 +43,18 @@
           :key="day.key"
           class="week-day"
           :class="{ 'today': day.isToday, 'selected': selectedKey === day.key }"
+          role="button"
+          tabindex="0"
+          :aria-pressed="selectedKey === day.key"
+          :aria-label="day.label"
+          @click="select(day)"
+          @keydown.enter.prevent="select(day)"
+          @keydown.space.prevent="select(day)"
         >
-          <button type="button" class="week-day-header" :aria-pressed="selectedKey === day.key" @click="select(day)">
+          <div class="week-day-header">
             <span class="week-day-name">{{ day.weekday }}</span>
             <span class="week-day-number" :class="{ 'is-today': day.isToday }">{{ day.number }}</span>
-          </button>
+          </div>
           <div class="week-day-body" role="region" :aria-label="day.label">
             <span class="day-placeholder"></span>
           </div>
@@ -178,7 +185,9 @@ const select = day => {
 .day-cell.today .day-number { border: 1px solid var(--el-color-primary); }
 .day-placeholder { min-height: 4px; }
 .week-view { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.week-day { border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; min-width: 0; }
+.week-day { border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; min-width: 0; cursor: pointer; }
+.week-day:hover { background: var(--app-bg, #f7f8fa); }
+.week-day:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 .week-day.today { border-color: var(--el-color-primary); }
 .week-day.selected { background: var(--el-color-primary-light-9); }
 .week-day-header { width: 100%; border: 0; background: transparent; padding: 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; color: inherit; }
