@@ -1,10 +1,22 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import Footer from './components/Footer.vue'
-import { onErrorCaptured, ref } from 'vue'
+import { onErrorCaptured, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
+const route = useRoute()
 const hasError = ref(false)
+
+// 登录/注册之间使用方向明确的滑动过渡，其他页面保持轻量淡入。
+const isAuthPath = path => path.startsWith('/login') || path.startsWith('/register')
+const pageTransition = ref('el-fade-in')
+watch(() => route.fullPath, (to, from) => {
+  if (from && isAuthPath(from) && isAuthPath(to) && to !== from) {
+    pageTransition.value = to.startsWith('/register') ? 'auth-slide-left' : 'auth-slide-right'
+  } else {
+    pageTransition.value = 'el-fade-in'
+  }
+})
 
 onErrorCaptured(() => {
   hasError.value = true
@@ -23,7 +35,11 @@ const reloadPage = () => {
   <el-container class="app-container" direction="vertical">
     <el-container class="main-container" v-if="!hasError">
       <el-main class="content-main">
-        <RouterView />
+        <RouterView v-slot="{ Component, route: currentRoute }">
+          <transition :name="pageTransition" mode="out-in">
+            <component :is="Component" :key="currentRoute.fullPath" v-if="Component" />
+          </transition>
+        </RouterView>
       </el-main>
     </el-container>
     <el-container v-else class="error-container">
@@ -74,5 +90,36 @@ const reloadPage = () => {
   width: 100%;
   display: flex;
   justify-content: center;
+}
+
+/* 登录/注册页面切换：前进向右滑入，返回向左滑入，配合淡入让页面变化明显可感知 */
+.auth-slide-left-enter-active,
+.auth-slide-right-enter-active {
+  transition: opacity 0.2s ease, transform 0.26s ease;
+}
+
+.auth-slide-left-leave-active,
+.auth-slide-right-leave-active {
+  transition: opacity 0.16s ease, transform 0.2s ease;
+}
+
+.auth-slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+.auth-slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.auth-slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.auth-slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(40px);
 }
 </style>
