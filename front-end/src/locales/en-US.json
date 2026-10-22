@@ -170,6 +170,16 @@
     "loadFailed": "Failed to load dashboard",
     "retry": "Retry"
   },
+  "calendar": {
+    "title": "Calendar",
+    "view": "Switch view",
+    "month": "Month",
+    "week": "Week",
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next",
+    "noTodosYet": "No todos on this date yet"
+  },
   "todoDetail": {
     "repeatRule": "Repeat rule",
     "repeatNONE": "Does not repeat",

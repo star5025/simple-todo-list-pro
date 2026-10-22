@@ -7,6 +7,7 @@ import TodoDetail from '@/components/TodoDetail.vue'
 import AddTodo from '@/components/AddTodo.vue'
 import UserInfo from '@/components/UserInfo.vue'
 import Dashboard from '@/views/Dashboard.vue'
+import CalendarView from '@/views/CalendarView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,11 @@ const router = createRouter({
           path: 'dashboard',
           name: 'Dashboard',
           component: Dashboard
+        },
+        {
+          path: 'calendar',
+          name: 'Calendar',
+          component: CalendarView
         },
         {
           path: 'todo/:id',

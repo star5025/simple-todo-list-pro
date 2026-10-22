@@ -154,8 +154,7 @@
     "showLess": "收起"
   },
   "dashboard": {
-    "title": "数据看板",
-    "overview": "概览",
+    "title": "数据看板",    "overview": "概览",
     "total": "全部任务",
     "pending": "未完成",
     "completed": "已完成",
@@ -169,6 +168,16 @@
     "noDueSoon": "未来7天没有到期的任务",
     "loadFailed": "看板加载失败",
     "retry": "重试"
+  },
+  "calendar": {
+    "title": "日历",
+    "view": "切换视图",
+    "month": "月",
+    "week": "周",
+    "today": "今天",
+    "previous": "上一页",
+    "next": "下一页",
+    "noTodosYet": "该日期暂无待办事项"
   },
   "todoDetail": {
     "repeatRule": "重复规则",
