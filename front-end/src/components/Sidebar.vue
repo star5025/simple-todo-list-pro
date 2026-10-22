@@ -224,20 +224,11 @@ const handleUserInfo = () => {
   emit('navigate')
 }
 
-// 设置时间筛选条件
+// 设置时间筛选条件：点击同一字段在升序/降序间切换，不再取消排序
 const setTimeFilter = (field) => {
   if (timeFilter.value.field === field) {
-    // 如果点击的是当前激活的字段
-    if (timeFilter.value.order === 'asc') {
-      // 第二次点击：切换为降序
-      timeFilter.value.order = 'desc'
-    } else {
-      // 第三次点击：取消选中状态
-      timeFilter.value.field = null
-      timeFilter.value.order = null
-    }
+    timeFilter.value.order = timeFilter.value.order === 'asc' ? 'desc' : 'asc'
   } else {
-    // 如果点击的是新的字段，则设置为该字段并默认升序
     timeFilter.value.field = field
     timeFilter.value.order = 'asc'
   }
@@ -411,5 +402,12 @@ defineExpose({
 .filter-buttons .custom-button--primary { background: var(--el-color-primary-light-9); border-color: transparent; color: var(--el-color-primary); }
 .custom-button--default { background: transparent; color: var(--app-muted); }
 .custom-button:hover { filter: brightness(.97); }
+
+/* 排序箭头放大且不拦截点击，整个按钮都是可点区域 */
+.filter-buttons .custom-button .el-icon {
+  font-size: 16px;
+  margin-left: 4px;
+  pointer-events: none;
+}
 @media (max-width: 760px) { .sidebar { width: 100%; padding: 16px 20px 32px; border: 0; } .custom-button { min-height: 44px; } }
 </style>
