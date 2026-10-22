@@ -3,6 +3,7 @@ package org.star5025.backend.controller;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.star5025.backend.context.BaseContext;
@@ -134,5 +135,16 @@ public class TaskController {
     @ApiOperation("获取当前用户任务看板统计")
     public Result<TaskDashboardVO> dashboard() {
         return Result.success(taskService.getDashboard());
+    }
+
+    /**
+     * 日历范围查询：开始时间落在 [from, to) 的任务
+     */
+    @GetMapping("/calendar")
+    @ApiOperation("按开始时间范围查询任务")
+    public Result<List<Task>> calendar(
+            @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return Result.success(taskService.getCalendarTasks(from, to));
     }
 }

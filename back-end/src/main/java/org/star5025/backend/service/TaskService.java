@@ -10,6 +10,9 @@ import org.star5025.backend.vo.TaskDashboardVO;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public interface TaskService {
 
     /**
@@ -68,4 +71,9 @@ public interface TaskService {
      * 获取当前登录用户的看板统计。
      */
     TaskDashboardVO getDashboard();
+
+    /**
+     * 获取当前用户开始时间落在 [from, to) 范围内的任务（日历视图）。
+     */
+    List<Task> getCalendarTasks(LocalDateTime from, LocalDateTime to);
 }

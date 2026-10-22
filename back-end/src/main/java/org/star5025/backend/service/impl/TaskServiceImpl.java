@@ -212,6 +212,15 @@ public class TaskServiceImpl implements TaskService {
         return dashboard;
     }
 
+    @Override
+    public List<Task> getCalendarTasks(LocalDateTime from, LocalDateTime to) {
+        Long userId = requireCurrentUserId();
+        if (from == null || to == null || !to.isAfter(from)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "无效的日期范围");
+        }
+        return taskMapper.selectByStartRange(userId, from, to);
+    }
+
     private Long requireCurrentUserId() {
         Long userId = BaseContext.getCurrentId();
         if (userId == null || userId <= 0) {

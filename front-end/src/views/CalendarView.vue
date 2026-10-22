@@ -27,11 +27,12 @@
             class="day-cell"
             :class="{ 'outside': !day.inMonth, 'today': day.isToday, 'selected': selectedKey === day.key }"
             :aria-pressed="selectedKey === day.key"
-            :aria-label="day.label"
+            :aria-label="`${day.label}${day.count ? ' · ' + day.count : ''}`"
             @click="select(day)"
           >
             <span class="day-number">{{ day.number }}</span>
-            <span class="day-placeholder" aria-hidden="true">{{ day.inMonth ? '' : '' }}</span>
+            <span v-if="day.count" class="day-badge" aria-hidden="true">{{ day.count }}</span>
+            <span v-else class="day-placeholder" aria-hidden="true"></span>
           </button>
         </div>
       </div>
@@ -56,44 +57,60 @@
             <span class="week-day-number" :class="{ 'is-today': day.isToday }">{{ day.number }}</span>
           </div>
           <div class="week-day-body" role="region" :aria-label="day.label">
-            <span class="day-placeholder"></span>
+            <ul v-if="tasksByKey[day.key]?.length" class="week-task-list">
+              <li v-for="task in tasksByKey[day.key].slice(0, 5)" :key="task.taskId" class="week-task-item" :class="{ done: task.status }">
+                {{ task.taskName }}
+              </li>
+            </ul>
+            <span v-else class="day-placeholder"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 选中日期面板（待办内容后续接入） -->
+    <!-- 选中日期面板 -->
     <section v-if="selectedKey" class="day-panel" :aria-label="selectedLabel">
       <h3 class="day-panel-title">{{ selectedLabel }}</h3>
-      <p class="day-panel-empty">{{ t('calendar.noTodosYet') }}</p>
+      <ul v-if="selectedTasks.length" class="panel-task-list">
+        <li v-for="task in selectedTasks" :key="task.taskId">
+          <button type="button" class="panel-task-item" :class="{ done: task.status }" @click="openTask(task.taskId)">
+            <span class="panel-task-name">{{ task.taskName }}</span>
+            <span class="panel-task-time">{{ formatStart(task.startTime) }}</span>
+          </button>
+        </li>
+      </ul>
+      <p v-else class="day-panel-empty">{{ t('calendar.noTodosYet') }}</p>
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import request from '@/utils/request'
 
 const { t, locale } = useI18n()
+const router = useRouter()
 const view = ref('month')
 const cursor = ref(new Date())
 const selectedKey = ref(null)
 const selectedLabel = ref('')
+const tasks = ref([])
+const tasksLoading = ref(false)
+let requestSequence = 0
 
 const startOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate())
 const keyOf = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const addDays = (date, days) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 const addMonths = (date, months) => new Date(date.getFullYear(), date.getMonth() + months, 1)
-
 const today = startOfDay(new Date())
 const todayKey = keyOf(today)
 
-const weekdayLabels = computed(() => {
-  const zh = ['一', '二', '三', '四', '五', '六', '日']
-  const en = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  return locale.value === 'zh-CN' ? zh : en
-})
+const weekdayLabels = computed(() => locale.value === 'zh-CN'
+  ? ['一', '二', '三', '四', '五', '六', '日']
+  : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
 
 const title = computed(() => {
   const date = cursor.value
@@ -102,52 +119,81 @@ const title = computed(() => {
   const monday = weekStart(date)
   const sunday = addDays(monday, 6)
   const dayFmt = new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' })
-  if (monday.getMonth() === sunday.getMonth()) {
-    return `${formatter.format(monday)} · ${dayFmt.format(sunday)}`
-  }
+  if (monday.getMonth() === sunday.getMonth()) return `${formatter.format(monday)} · ${dayFmt.format(sunday)}`
   return `${dayFmt.format(monday)} – ${dayFmt.format(sunday)}, ${sunday.getFullYear()}`
 })
 
-// 周一作为一周开始
 const weekStart = date => {
   const d = startOfDay(date)
-  const offset = (d.getDay() + 6) % 7
-  return addDays(d, -offset)
+  return addDays(d, -((d.getDay() + 6) % 7))
 }
+
+const rangeDays = computed(() => view.value === 'month'
+  ? (() => { const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1); return Array.from({ length: 42 }, (_, i) => addDays(weekStart(first), i)) })()
+  : Array.from({ length: 7 }, (_, i) => addDays(weekStart(cursor.value), i)))
 
 const monthDays = computed(() => {
   const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
-  const start = weekStart(first)
-  return Array.from({ length: 42 }, (_, i) => {
-    const date = addDays(start, i)
-    return {
-      key: keyOf(date),
-      number: date.getDate(),
-      inMonth: date.getMonth() === first.getMonth(),
-      isToday: keyOf(date) === todayKey,
-      label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
-    }
-  })
+  return rangeDays.value.map(date => ({
+    key: keyOf(date),
+    number: date.getDate(),
+    inMonth: date.getMonth() === first.getMonth(),
+    isToday: keyOf(date) === todayKey,
+    count: tasksByKey.value[keyOf(date)]?.length || 0,
+    label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
+  }))
 })
 
-const weekDays = computed(() => {
-  const start = weekStart(cursor.value)
-  return Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(start, i)
-    return {
-      key: keyOf(date),
-      number: date.getDate(),
-      weekday: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short' }).format(date),
-      isToday: keyOf(date) === todayKey,
-      label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
-    }
-  })
+const weekDays = computed(() => rangeDays.value.map(date => ({
+  key: keyOf(date),
+  number: date.getDate(),
+  weekday: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short' }).format(date),
+  isToday: keyOf(date) === todayKey,
+  label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
+})))
+
+// 任务按开始时间的本地日期分组
+const tasksByKey = computed(() => {
+  const groups = {}
+  for (const task of tasks.value) {
+    if (!task.startTime) continue
+    const date = new Date(task.startTime)
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(task)
+  }
+  return groups
 })
+
+const selectedTasks = computed(() => selectedKey.value ? (tasksByKey.value[selectedKey.value] || []) : [])
+
+const formatStart = time => time ? new Date(time).toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : ''
+
+const fetchRange = async () => {
+  const days = rangeDays.value
+  const from = days[0].toISOString()
+  const to = addDays(days[days.length - 1], 1).toISOString()
+  const seq = ++requestSequence
+  tasksLoading.value = true
+  try {
+    const response = await request.get('/task/calendar', { from, to })
+    if (seq !== requestSequence) return
+    if (response.code === 1) tasks.value = response.data
+  } catch {
+    // 静默失败，保留旧数据
+  } finally {
+    if (seq === requestSequence) tasksLoading.value = false
+  }
+}
+
+let fetchTimer = null
+const scheduleFetch = () => {
+  window.clearTimeout(fetchTimer)
+  fetchTimer = window.setTimeout(fetchRange, 120)
+}
 
 const go = direction => {
-  cursor.value = view.value === 'month'
-    ? addMonths(cursor.value, direction)
-    : addDays(cursor.value, direction * 7)
+  cursor.value = view.value === 'month' ? addMonths(cursor.value, direction) : addDays(cursor.value, direction * 7)
 }
 
 const goToday = () => {
@@ -159,6 +205,10 @@ const select = day => {
   selectedKey.value = day.key
   selectedLabel.value = day.label
 }
+
+const openTask = taskId => router.push(`/home/todo/${taskId}`)
+
+watch([view, cursor], scheduleFetch, { immediate: true })
 </script>
 
 <style scoped>
@@ -183,6 +233,7 @@ const select = day => {
 .day-cell.selected { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
 .day-number { font-size: 14px; min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
 .day-cell.today .day-number { border: 1px solid var(--el-color-primary); }
+.day-badge { align-self: flex-start; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .day-placeholder { min-height: 4px; }
 .week-view { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .week-day { border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; min-width: 0; cursor: pointer; }
@@ -195,12 +246,22 @@ const select = day => {
 .week-day-number { font-size: 15px; font-weight: 600; min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
 .week-day-number.is-today { background: var(--el-color-primary); color: #fff; }
 .week-day-body { min-height: 260px; padding: 8px; }
+.week-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.week-task-item { font-size: 12px; line-height: 1.4; padding: 4px 6px; border-radius: 6px; background: var(--app-bg, #f7f8fa); color: #243047; overflow-wrap: anywhere; }
+.week-task-item.done { color: var(--app-muted, #697586); text-decoration: line-through; }
 .day-panel { margin-top: 16px; background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 20px; }
 .day-panel-title { margin: 0 0 10px; font-size: 16px; font-weight: 600; }
 .day-panel-empty { margin: 0; color: var(--app-muted, #697586); font-size: 14px; }
+.panel-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.panel-task-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: transparent; cursor: pointer; color: #243047; font-size: 14px; text-align: left; }
+.panel-task-item:hover { border-color: var(--el-color-primary); }
+.panel-task-item.done .panel-task-name { color: var(--app-muted, #697586); text-decoration: line-through; }
+.panel-task-name { min-width: 0; overflow-wrap: anywhere; }
+.panel-task-time { flex: none; color: var(--app-muted, #697586); font-size: 12px; }
 @media (max-width: 760px) {
   .calendar-body { padding: 10px; }
   .day-cell { min-height: 48px; padding: 6px 2px; align-items: center; border-radius: 8px; }
+  .day-badge { min-width: 18px; height: 18px; padding: 0 4px; font-size: 11px; }
   .month-grid { gap: 2px; }
   .week-view { display: flex; flex-direction: column; gap: 8px; }
   .week-day { display: flex; align-items: stretch; }

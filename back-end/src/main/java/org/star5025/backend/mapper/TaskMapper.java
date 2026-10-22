@@ -147,4 +147,17 @@ public interface TaskMapper {
             "AND due_time >= CURDATE() AND due_time < DATE_ADD(CURDATE(), INTERVAL 7 DAY) " +
             "GROUP BY DATE(due_time) ORDER BY 1")
     List<DashboardDayCount> selectDueByDay(@Param("userId") Long userId);
+
+    /**
+     * 日历：按开始时间落在 [from, to) 范围内的任务（UTC）。
+     */
+    @Select("SELECT task_id AS taskId, task_name AS taskName, status, description, " +
+            "created_time AS createdTime, start_time AS startTime, remind_time AS remindTime, " +
+            "due_time AS dueTime, favourite " +
+            "FROM task WHERE user_id = #{userId} AND start_time IS NOT NULL " +
+            "AND start_time >= #{from} AND start_time < #{to} " +
+            "ORDER BY start_time, task_id")
+    List<Task> selectByStartRange(@Param("userId") Long userId,
+                                  @Param("from") LocalDateTime from,
+                                  @Param("to") LocalDateTime to);
 }
