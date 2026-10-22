@@ -33,7 +33,7 @@ const reloadPage = () => {
       <el-main class="content-main">
         <RouterView v-slot="{ Component, route: currentRoute }">
           <transition :name="pageTransition" mode="out-in">
-            <component :is="Component" :key="currentRoute.fullPath" v-if="Component" />
+            <component :is="Component" :key="currentRoute.matched[0]?.path || currentRoute.fullPath" v-if="Component" />
           </transition>
         </RouterView>
       </el-main>

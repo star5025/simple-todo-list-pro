@@ -13,7 +13,7 @@
         <div class="home-content">
           <router-view v-slot="{ Component }">
             <keep-alive include="TodoList">
-              <component :is="Component" :key="$route.fullPath" v-if="Component" />
+              <component :is="Component" v-if="Component" />
             </keep-alive>
           </router-view>
         </div>
