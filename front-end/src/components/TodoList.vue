@@ -5,18 +5,14 @@
         <div class="card-header">
           <div class="header-left">
             <h1 class="list-title">{{ t('todoList.title') }} <span class="task-count">({{ total }})</span></h1>
-            <button
-              type="button"
-              class="icon-button compact-toggle"
-              :class="{ active: compactMode }"
-              :aria-pressed="compactMode"
-              :aria-label="t('todoList.compact')"
-              @click="compactMode = !compactMode"
-            >
-              <el-icon><Menu /></el-icon>
-            </button>
           </div>
           <div class="header-right">
+            <el-switch
+              v-model="compactMode"
+              :active-text="t('todoList.compact')"
+              inactive-text=""
+              :aria-label="t('todoList.compact')"
+            />
             <el-button
               v-if="!batchMode"
               plain
@@ -230,7 +226,7 @@ import { ref, onMounted, inject, watch, computed, onActivated, onUnmounted, next
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Check, Delete, DeleteFilled, Menu, Star, StarFilled } from '@element-plus/icons-vue'
+import { Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 
@@ -1026,11 +1022,6 @@ onMounted(() => {
 .icon-button:hover,
 .favourite-icon.favourited {
   color: var(--el-color-primary);
-}
-
-.compact-toggle.active {
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
 }
 
 .favourite-icon.pop {
