@@ -787,7 +787,7 @@ const toggleFavourite = async (todo, event) => {
       // 重绘后重新添加以重复触发动画
       void button.offsetWidth
       button.classList.add('pop')
-      window.setTimeout(() => button.classList.remove('pop'), 320)
+      window.setTimeout(() => button.classList.remove('pop'), 450)
     }
     const newFavouriteStatus = !todo.favourite;
     
@@ -1021,13 +1021,14 @@ onMounted(() => {
 }
 
 .favourite-icon.pop .el-icon {
-  animation: star-pop 0.3s ease;
+  animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes star-pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.35); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1) rotate(0deg); filter: none; }
+  35% { transform: scale(1.65) rotate(-20deg); filter: drop-shadow(0 0 7px rgba(255, 190, 0, 0.9)); }
+  70% { transform: scale(0.9) rotate(10deg); filter: drop-shadow(0 0 3px rgba(255, 190, 0, 0.5)); }
+  100% { transform: scale(1) rotate(0deg); filter: none; }
 }
 
 .countdown-tag {
