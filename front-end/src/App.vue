@@ -7,15 +7,11 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const hasError = ref(false)
 
-// 登录/注册之间使用方向明确的滑动过渡，其他页面保持轻量淡入。
+// 登录/注册之间使用克制的淡入过渡，其他页面保持轻量淡入。
 const isAuthPath = path => path.startsWith('/login') || path.startsWith('/register')
 const pageTransition = ref('el-fade-in')
 watch(() => route.fullPath, (to, from) => {
-  if (from && isAuthPath(from) && isAuthPath(to) && to !== from) {
-    pageTransition.value = to.startsWith('/register') ? 'auth-slide-left' : 'auth-slide-right'
-  } else {
-    pageTransition.value = 'el-fade-in'
-  }
+  pageTransition.value = from && isAuthPath(from) && isAuthPath(to) && to !== from ? 'auth-fade' : 'el-fade-in'
 })
 
 onErrorCaptured(() => {
@@ -63,6 +59,8 @@ const reloadPage = () => {
 .app-container {
   min-height: 100vh;
   min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
 }
@@ -71,12 +69,17 @@ const reloadPage = () => {
   flex: 1;
   display: flex;
   min-width: 0;
+  min-height: 0;
 }
 
 .content-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .error-container {
@@ -92,34 +95,21 @@ const reloadPage = () => {
   justify-content: center;
 }
 
-/* 登录/注册页面切换：前进向右滑入，返回向左滑入，配合淡入让页面变化明显可感知 */
-.auth-slide-left-enter-active,
-.auth-slide-right-enter-active {
-  transition: opacity 0.2s ease, transform 0.26s ease;
+/* 登录/注册页面切换：淡入并轻微上浮，克制但可感知 */
+.auth-fade-enter-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
 }
 
-.auth-slide-left-leave-active,
-.auth-slide-right-leave-active {
-  transition: opacity 0.16s ease, transform 0.2s ease;
+.auth-fade-leave-active {
+  transition: opacity 0.14s ease;
 }
 
-.auth-slide-left-enter-from {
+.auth-fade-enter-from {
   opacity: 0;
-  transform: translateX(40px);
+  transform: translateY(10px);
 }
 
-.auth-slide-left-leave-to {
+.auth-fade-leave-to {
   opacity: 0;
-  transform: translateX(-40px);
-}
-
-.auth-slide-right-enter-from {
-  opacity: 0;
-  transform: translateX(-40px);
-}
-
-.auth-slide-right-leave-to {
-  opacity: 0;
-  transform: translateX(40px);
 }
 </style>

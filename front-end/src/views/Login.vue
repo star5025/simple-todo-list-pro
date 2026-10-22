@@ -192,9 +192,12 @@ const goToRegister = () => {
 
 <style scoped>
 .login-container {
-  display: grid;
-  place-items: center;
-  min-height: calc(100svh - 56px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  flex: 1;
+  min-height: 0;
   padding: 24px 16px;
   box-sizing: border-box;
   background: var(--app-bg, #f7f8fa);
@@ -272,6 +275,39 @@ const goToRegister = () => {
   .login-card :deep(.el-card__header),
   .login-card :deep(.el-card__body) {
     padding: 16px;
+  }
+}
+
+/* 矮窗口：收紧间距，尽量完整展示，避免出现竖向滚动条 */
+@media (max-height: 700px) {
+  .login-container {
+    justify-content: flex-start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .login-card :deep(.el-card__header) {
+    padding: 12px 20px;
+  }
+
+  .login-card :deep(.el-card__body) {
+    padding: 12px 20px 16px;
+  }
+
+  .language-switch {
+    margin-bottom: 8px;
+  }
+
+  .login-card :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+
+  .login-card :deep(.el-checkbox) {
+    min-height: 32px;
+  }
+
+  .register-link {
+    margin-top: 8px;
   }
 }
 </style>
