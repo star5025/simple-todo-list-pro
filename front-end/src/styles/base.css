@@ -76,3 +76,9 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
   .todo-date-popper .el-date-picker__time-header .el-input__inner { font-size: 14px; }
   .todo-date-popper .el-time-panel { width: min(180px, calc(100vw - 36px)); }
 }
+
+/* 移动端导航抽屉瞬开瞬关，避免关闭动画被感知为侧栏闪烁 */
+.el-drawer,
+.el-overlay {
+  transition-duration: 0s !important;
+}

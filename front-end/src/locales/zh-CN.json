@@ -30,6 +30,7 @@
     "addTodo": "新增待办",
     "userInfo": "个人信息",
     "favourites": "我的收藏",
+    "loading": "加载中…",
     "noFavourites": "暂无收藏的待办",
     "filters": "筛选待办",
     "sortBy": "时间排序",

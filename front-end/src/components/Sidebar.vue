@@ -43,7 +43,7 @@
         
         <div class="favourite-content">
           <div v-if="loadingFavourites" class="loading-container">
-            <el-skeleton :rows="3" animated />
+            <el-text size="small" type="info">{{ t('sidebar.loading') }}</el-text>
           </div>
           
           <div v-else-if="favouriteTodos.length === 0" class="empty-container">

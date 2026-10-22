@@ -30,6 +30,7 @@
     "addTodo": "Add Todo",
     "userInfo": "User Info",
     "favourites": "My Favourites",
+    "loading": "Loading…",
     "noFavourites": "No favourite todos",
     "filters": "Filter Todos",
     "sortBy": "Sort By",
