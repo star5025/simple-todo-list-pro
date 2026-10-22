@@ -232,7 +232,7 @@ npm run dev
 
 默认情况下，前端服务将运行在 http://localhost:5173
 
-> 🛠️**系统测试账户与密码**: test 123456
+> 🛠️**系统测试账户与密码**: test 123456。演示账号 demo / demo123456，可通过 `back-end/src/main/resources/db/demo-data.sql` 幂等重建示例任务（仅在独立本地库执行）。
 
 ## <span id="后端接口调试方法">后端接口调试方法</span>
 
