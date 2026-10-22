@@ -88,6 +88,58 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
   .todo-date-popper .el-time-panel { width: min(180px, calc(100vw - 36px)); }
 }
 
+/* 只装饰浮层，不对页面、路由容器或导航抽屉添加动画。 */
+.el-message {
+  --el-message-bg-color: var(--app-surface);
+  --el-message-border-color: var(--app-border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  gap: 10px;
+  box-shadow: 0 6px 24px rgb(36 48 71 / 9%);
+  transition: opacity .16s ease, transform .16s ease;
+}
+.el-message .el-message__content { color: var(--el-text-color-primary); line-height: 1.5; }
+.el-message .el-message__icon { font-size: 18px; flex-shrink: 0; }
+.el-message-fade-enter-from, .el-message-fade-leave-to { opacity: 0; transform: translateY(-6px); }
+.el-message-fade-enter-from.is-bottom, .el-message-fade-leave-to.is-bottom { transform: translateY(6px); }
+
+.el-dialog, .el-message-box {
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 56px rgb(36 48 71 / 14%);
+}
+.el-message-box { --el-messagebox-padding-primary: 22px; --el-messagebox-width: 440px; width: min(440px, calc(100vw - 32px)); }
+.el-message-box__title, .el-dialog__title { font-size: 17px; font-weight: 600; }
+.el-message-box__message p { line-height: 1.75; }
+.el-message-box__btns { gap: 8px; }
+.el-message-box__btns .el-button + .el-button { margin-left: 0; }
+.el-dialog__footer { border-top: 1px solid var(--app-border); margin-top: 16px; padding-top: 16px; }
+.el-dialog__headerbtn, .el-message-box__headerbtn { border-radius: 8px; }
+.el-dialog__headerbtn:hover, .el-message-box__headerbtn:hover { background: var(--el-color-primary-light-9); }
+
+/* Element Plus 原生过渡：遮罩仅淡入，卡片轻微缩放，不移动整层。 */
+.dialog-fade-enter-active, .dialog-fade-leave-active { animation-duration: .18s; }
+.dialog-fade-enter-active .el-overlay-dialog, .dialog-fade-leave-active .el-overlay-dialog,
+.fade-in-linear-enter-active .el-overlay-message-box, .fade-in-linear-leave-active .el-overlay-message-box { animation: none; }
+.dialog-fade-enter-active .el-dialog, .fade-in-linear-enter-active .el-message-box { animation: surface-in .18s ease-out; }
+.dialog-fade-leave-active .el-dialog, .fade-in-linear-leave-active .el-message-box { animation: surface-out .12s ease-in; }
+@keyframes surface-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes surface-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.98); } }
+
+.el-popper.is-light { border-color: var(--app-border); border-radius: 10px; box-shadow: 0 8px 28px rgb(36 48 71 / 10%); }
+.el-dropdown-menu { border-radius: 10px; padding: 6px; }
+.el-dropdown-menu__item { border-radius: 6px; min-height: 36px; transition: background-color .12s ease; }
+.el-select-dropdown__item { transition: background-color .12s ease; }
+.el-button { transition: background-color .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease; }
+.el-button:not(.is-disabled):active { filter: brightness(.97); }
+.el-input__wrapper, .el-select__wrapper { transition: box-shadow .14s ease; }
+
+@media (max-width: 760px) {
+  .el-message-box { --el-messagebox-padding-primary: 18px; }
+  .el-message { padding: 11px 14px; }
+  .el-dropdown-menu__item { min-height: 44px; }
+}
+
 /* 移动端导航抽屉瞬开瞬关，避免关闭动画被感知为侧栏闪烁 */
 .el-drawer,
 .el-overlay {
