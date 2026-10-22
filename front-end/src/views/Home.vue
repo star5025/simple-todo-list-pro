@@ -12,9 +12,11 @@
         <!-- 主页内容区域 -->
         <div class="home-content">
           <router-view v-slot="{ Component }">
-            <transition name="el-fade-in" mode="out-in">
-              <component :is="Component" :key="$route.fullPath" v-if="Component" />
-            </transition>
+            <keep-alive include="TodoList">
+              <transition name="el-fade-in" mode="out-in">
+                <component :is="Component" :key="$route.fullPath" v-if="Component" />
+              </transition>
+            </keep-alive>
           </router-view>
         </div>
       </el-main>
