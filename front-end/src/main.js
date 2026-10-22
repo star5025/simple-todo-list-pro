@@ -8,12 +8,15 @@ import ElementPlus, { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import './styles/base.css'
 
-// 提示消息单条显示：新消息顶替旧消息，避免多条堆叠遮挡界面。
+// 提示消息合并：相同内容的提示在短时间窗口内合并为一条并显示次数，
+// 配合操作防抖避免快速点击时提示不断弹出闪动。
 for (const type of ['success', 'warning', 'info', 'error']) {
   const original = ElMessage[type]
   ElMessage[type] = (options, ...rest) => {
-    ElMessage.closeAll()
-    return original(options, ...rest)
+    const payload = typeof options === 'string'
+      ? { message: options, grouping: true }
+      : { ...(options || {}), grouping: true }
+    return original(payload, ...rest)
   }
 }
 

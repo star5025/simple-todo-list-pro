@@ -551,15 +551,18 @@ const fetchTodos = async (filters = {}) => {
 
 // 更新待办状态
 const updateTodoStatus = async (todo, newStatus) => {
-  // 如果待办事项已经完成，则不允许再标记为未完成
-  if (todo.status === true) {
-    // 已完成的待办事项不能再改为未完成
-    ElMessage.warning(t('todoList.cannotUncomplete'))
-    return
-  }
-  
-  // 待办事项从未完成标记为完成的情况
+  const key = `status:${todo.taskId}`
+  if (pendingTaskActions.has(key)) return
+  pendingTaskActions.add(key)
   try {
+    // 如果待办事项已经完成，则不允许再标记为未完成
+    if (todo.status === true) {
+      // 已完成的待办事项不能再改为未完成
+      ElMessage.warning(t('todoList.cannotUncomplete'))
+      return
+    }
+
+    // 待办事项从未完成标记为完成的情况
     await ElMessageBox.confirm(
       t('todoList.confirmComplete', [todo.taskName]),
       t('todoList.completeConfirmation'),
@@ -588,6 +591,8 @@ const updateTodoStatus = async (todo, newStatus) => {
     if (error !== 'cancel' && error !== 'close') {
       ElMessage.error(t('todoList.statusUpdateFailed'))
     }
+  } finally {
+    releaseTaskAction(key)
   }
 }
 
@@ -765,8 +770,15 @@ const batchDeleteTodos = async () => {
   }
 }
 
+// 同一任务的交互在请求期间只允许一次，避免快速连点刷屏
+const pendingTaskActions = new Set()
+const releaseTaskAction = key => { window.setTimeout(() => pendingTaskActions.delete(key), 300) }
+
 // 切换收藏状态
 const toggleFavourite = async (todo) => {
+  const key = `fav:${todo.taskId}`
+  if (pendingTaskActions.has(key)) return
+  pendingTaskActions.add(key)
   try {
     const newFavouriteStatus = !todo.favourite;
     
@@ -802,6 +814,8 @@ const toggleFavourite = async (todo) => {
     }
   } catch (error) {
     ElMessage.error(t('todoList.favoriteOperationFailed') + ': ' + error.message);
+  } finally {
+    releaseTaskAction(key)
   }
 };
 
