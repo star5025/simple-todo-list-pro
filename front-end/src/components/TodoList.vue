@@ -1018,14 +1018,13 @@ onMounted(() => {
 }
 
 .favourite-icon.pop {
-  animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: star-pop 0.32s ease;
 }
 
 @keyframes star-pop {
-  0% { transform: scale(1) rotate(0deg); filter: none; }
-  35% { transform: scale(1.35) rotate(-12deg); filter: drop-shadow(0 0 7px rgba(255, 190, 0, 0.9)); }
-  70% { transform: scale(0.94) rotate(6deg); filter: drop-shadow(0 0 3px rgba(255, 190, 0, 0.5)); }
-  100% { transform: scale(1) rotate(0deg); filter: none; }
+  0% { transform: scale(1); filter: none; }
+  40% { transform: scale(1.22); filter: drop-shadow(0 0 6px rgba(57, 117, 203, 0.55)); }
+  100% { transform: scale(1); filter: none; }
 }
 
 .countdown-tag {
