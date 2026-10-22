@@ -76,7 +76,3 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
   .todo-date-popper .el-date-picker__time-header .el-input__inner { font-size: 14px; }
   .todo-date-popper .el-time-panel { width: min(180px, calc(100vw - 36px)); }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-}
