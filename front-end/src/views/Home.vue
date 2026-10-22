@@ -13,9 +13,7 @@
         <div class="home-content">
           <router-view v-slot="{ Component }">
             <keep-alive include="TodoList">
-              <transition name="el-fade-in" mode="out-in">
-                <component :is="Component" :key="$route.fullPath" v-if="Component" />
-              </transition>
+              <component :is="Component" :key="$route.fullPath" v-if="Component" />
             </keep-alive>
           </router-view>
         </div>

@@ -7,11 +7,11 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const hasError = ref(false)
 
-// 登录/注册之间使用克制的淡入过渡，其他页面保持轻量淡入。
+// 登录/注册之间保留克制的淡入过渡；其他页面切换不使用过渡，避免整页闪烁。
 const isAuthPath = path => path.startsWith('/login') || path.startsWith('/register')
-const pageTransition = ref('el-fade-in')
+const pageTransition = ref('')
 watch(() => route.fullPath, (to, from) => {
-  pageTransition.value = from && isAuthPath(from) && isAuthPath(to) && to !== from ? 'auth-fade' : 'el-fade-in'
+  pageTransition.value = from && isAuthPath(from) && isAuthPath(to) && to !== from ? 'auth-fade' : ''
 })
 
 onErrorCaptured(() => {
