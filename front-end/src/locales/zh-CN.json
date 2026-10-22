@@ -103,6 +103,7 @@
   },
   "todoList": {
     "title": "待办事项",
+    "compact": "简洁显示",
     "pageSize": "每页条数",
     "showDate": "显示日期",
     "hideDate": "隐藏日期",

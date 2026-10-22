@@ -103,6 +103,7 @@
   },
   "todoList": {
     "title": "Todos",
+    "compact": "Compact view",
     "pageSize": "Items per page",
     "showDate": "Show Date",
     "hideDate": "Hide Date",

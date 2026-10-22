@@ -5,16 +5,19 @@
         <div class="card-header">
           <div class="header-left">
             <h1 class="list-title">{{ t('todoList.title') }} <span class="task-count">({{ total }})</span></h1>
+            <button
+              type="button"
+              class="icon-button compact-toggle"
+              :class="{ active: compactMode }"
+              :aria-pressed="compactMode"
+              :aria-label="t('todoList.compact')"
+              @click="compactMode = !compactMode"
+            >
+              <el-icon><Menu /></el-icon>
+            </button>
           </div>
           <div class="header-right">
-            <el-switch
-              v-model="showDateGroups"
-              :active-text="showDateGroups ? t('todoList.showDate') : t('todoList.hideDate')"
-              inactive-text=""
-              :aria-label="t('todoList.showDate')"
-              @change="handleDateGroupToggle"
-            />
-            <el-button 
+            <el-button
               v-if="!batchMode"
               plain
               :icon="Delete" 
@@ -44,7 +47,7 @@
       
       <div v-else>
         <!-- 按日期分组显示待办事项 -->
-        <template v-if="showDateGroups">
+        <template v-if="showDateGroups && !compactMode">
           <div 
             v-for="(group, date) in groupedTodos" 
             :key="date" 
@@ -96,8 +99,9 @@
                 >
                   <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
                 </button>
-                <el-tag 
-                  :type="getCountdownTagType(todo)" 
+                <el-tag
+                  v-if="!compactMode"
+                  :type="getCountdownTagType(todo)"
                   size="small"
                   class="countdown-tag"
                 >
@@ -161,8 +165,9 @@
               >
                 <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
               </button>
-              <el-tag 
-                :type="getCountdownTagType(todo)" 
+              <el-tag
+                v-if="!compactMode"
+                :type="getCountdownTagType(todo)"
                 size="small"
                 class="countdown-tag"
               >
@@ -225,7 +230,7 @@ import { ref, onMounted, inject, watch, computed, onActivated, onUnmounted, next
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
+import { Check, Delete, DeleteFilled, Menu, Star, StarFilled } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 
@@ -241,6 +246,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const showDateGroups = ref(true) // 控制是否显示日期分组
+const compactMode = ref(false) // 简洁显示：平铺列表，仅保留完成/删除/收藏操作
 const batchMode = ref(false) // 控制是否处于批量删除模式
 const selectedTodoIds = ref([]) // 用于批量删除的选中项
 
@@ -1020,6 +1026,11 @@ onMounted(() => {
 .icon-button:hover,
 .favourite-icon.favourited {
   color: var(--el-color-primary);
+}
+
+.compact-toggle.active {
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
 }
 
 .favourite-icon.pop {
