@@ -89,10 +89,10 @@
                   v-if="!batchMode"
                   type="button"
                   class="icon-button favourite-icon"
-                  :class="{ 'favourited': todo.favourite }"
+                  :class="{ 'favourited': todo.favourite, 'pop': poppingTaskId === todo.taskId }"
                   :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
                   :aria-pressed="!!todo.favourite"
-                  @click.stop="toggleFavourite(todo, $event)"
+                  @click.stop="toggleFavourite(todo)"
                 >
                   <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
                 </button>
@@ -154,10 +154,10 @@
                 v-if="!batchMode"
                 type="button"
                 class="icon-button favourite-icon"
-                :class="{ 'favourited': todo.favourite }"
+                :class="{ 'favourited': todo.favourite, 'pop': poppingTaskId === todo.taskId }"
                 :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
                 :aria-pressed="!!todo.favourite"
-                @click.stop="toggleFavourite(todo, $event)"
+                @click.stop="toggleFavourite(todo)"
               >
                 <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
               </button>
@@ -773,22 +773,19 @@ const batchDeleteTodos = async () => {
 // 同一任务的交互在请求期间只允许一次，避免快速连点刷屏
 const pendingTaskActions = new Set()
 const releaseTaskAction = key => { window.setTimeout(() => pendingTaskActions.delete(key), 300) }
+// 星标动画由响应式 class 控制，避免状态更新重写 class 打断动画
+const poppingTaskId = ref(null)
 
 // 切换收藏状态
-const toggleFavourite = async (todo, event) => {
+const toggleFavourite = async (todo) => {
   const key = `fav:${todo.taskId}`
   if (pendingTaskActions.has(key)) return
   pendingTaskActions.add(key)
   try {
-    // 星标缩放动效；防抖保证连点只触发一次
-    const button = event?.currentTarget
-    if (button) {
-      button.classList.remove('pop')
-      // 重绘后重新添加以重复触发动画
-      void button.offsetWidth
-      button.classList.add('pop')
-      window.setTimeout(() => button.classList.remove('pop'), 450)
-    }
+    poppingTaskId.value = todo.taskId
+    window.setTimeout(() => {
+      if (poppingTaskId.value === todo.taskId) poppingTaskId.value = null
+    }, 450)
     const newFavouriteStatus = !todo.favourite;
     
     // 发送完整数据对象而不是仅发送变化的字段
@@ -1020,14 +1017,14 @@ onMounted(() => {
   color: var(--el-color-primary);
 }
 
-.favourite-icon.pop .el-icon {
+.favourite-icon.pop {
   animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes star-pop {
   0% { transform: scale(1) rotate(0deg); filter: none; }
-  35% { transform: scale(1.65) rotate(-20deg); filter: drop-shadow(0 0 7px rgba(255, 190, 0, 0.9)); }
-  70% { transform: scale(0.9) rotate(10deg); filter: drop-shadow(0 0 3px rgba(255, 190, 0, 0.5)); }
+  35% { transform: scale(1.35) rotate(-12deg); filter: drop-shadow(0 0 7px rgba(255, 190, 0, 0.9)); }
+  70% { transform: scale(0.94) rotate(6deg); filter: drop-shadow(0 0 3px rgba(255, 190, 0, 0.5)); }
   100% { transform: scale(1) rotate(0deg); filter: none; }
 }
 
