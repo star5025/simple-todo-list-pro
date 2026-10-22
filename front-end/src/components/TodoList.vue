@@ -92,7 +92,7 @@
                   :class="{ 'favourited': todo.favourite }"
                   :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
                   :aria-pressed="!!todo.favourite"
-                  @click.stop="toggleFavourite(todo)"
+                  @click.stop="toggleFavourite(todo, $event)"
                 >
                   <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
                 </button>
@@ -157,7 +157,7 @@
                 :class="{ 'favourited': todo.favourite }"
                 :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
                 :aria-pressed="!!todo.favourite"
-                @click.stop="toggleFavourite(todo)"
+                @click.stop="toggleFavourite(todo, $event)"
               >
                 <el-icon aria-hidden="true"><Star v-if="!todo.favourite" /><StarFilled v-else /></el-icon>
               </button>
@@ -775,11 +775,20 @@ const pendingTaskActions = new Set()
 const releaseTaskAction = key => { window.setTimeout(() => pendingTaskActions.delete(key), 300) }
 
 // 切换收藏状态
-const toggleFavourite = async (todo) => {
+const toggleFavourite = async (todo, event) => {
   const key = `fav:${todo.taskId}`
   if (pendingTaskActions.has(key)) return
   pendingTaskActions.add(key)
   try {
+    // 星标缩放动效；防抖保证连点只触发一次
+    const button = event?.currentTarget
+    if (button) {
+      button.classList.remove('pop')
+      // 重绘后重新添加以重复触发动画
+      void button.offsetWidth
+      button.classList.add('pop')
+      window.setTimeout(() => button.classList.remove('pop'), 320)
+    }
     const newFavouriteStatus = !todo.favourite;
     
     // 发送完整数据对象而不是仅发送变化的字段
@@ -1009,6 +1018,16 @@ onMounted(() => {
 .icon-button:hover,
 .favourite-icon.favourited {
   color: var(--el-color-primary);
+}
+
+.favourite-icon.pop .el-icon {
+  animation: star-pop 0.3s ease;
+}
+
+@keyframes star-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
 }
 
 .countdown-tag {
