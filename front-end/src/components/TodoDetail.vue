@@ -209,7 +209,8 @@ const router = useRouter()
 const { t } = useI18n()
 
 const todo = ref(null)
-const loading = ref(false)
+// 初始即为加载中：进入详情先显示骨架，取到数据才渲染，避免闪现"未找到"
+const loading = ref(true)
 const isEditing = ref(false)
 const repeatRules = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY']
 const repeatRule = ref('NONE')
