@@ -66,8 +66,8 @@
         </div>
       </el-card>
       
-      <!-- 筛选区域 -->
-      <el-card class="filter-card" shadow="never">
+      <!-- 筛选区域：仅在待办列表页有意义 -->
+      <el-card v-if="isListPage" class="filter-card" shadow="never">
         <template #header>
           <div class="filter-header">
             <el-icon><Filter /></el-icon>
@@ -179,8 +179,8 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -198,6 +198,8 @@ import request from '@/utils/request'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
+const isListPage = computed(() => route.path === '/home/list')
 const emit = defineEmits(['navigate'])
 const filterParams = inject('filterParams', ref({}))
 const initialOrder = filterParams.value.orderBy || ''
