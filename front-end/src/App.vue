@@ -95,20 +95,13 @@ const reloadPage = () => {
   justify-content: center;
 }
 
-/* 登录/注册页面切换：淡入并轻微上浮，克制但可感知 */
-.auth-fade-enter-active {
-  transition: opacity 0.24s ease, transform 0.24s ease;
-}
-
+/* 登录/注册页面切换：纯淡入，不产生任何位移，避免切换瞬间出现滚动条 */
+.auth-fade-enter-active,
 .auth-fade-leave-active {
-  transition: opacity 0.14s ease;
+  transition: opacity 0.22s ease;
 }
 
-.auth-fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
+.auth-fade-enter-from,
 .auth-fade-leave-to {
   opacity: 0;
 }

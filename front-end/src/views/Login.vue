@@ -282,32 +282,38 @@ const goToRegister = () => {
 @media (max-height: 700px) {
   .login-container {
     justify-content: flex-start;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .login-card :deep(.el-card__header) {
-    padding: 12px 20px;
+    padding: 10px 16px;
   }
 
   .login-card :deep(.el-card__body) {
-    padding: 12px 20px 16px;
+    padding: 10px 16px 12px;
   }
 
   .language-switch {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .login-card :deep(.el-form-item) {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+  }
+
+  .login-card :deep(.el-input__wrapper),
+  .login-card :deep(.el-select__wrapper),
+  .login-card :deep(.el-button) {
+    min-height: 40px;
   }
 
   .login-card :deep(.el-checkbox) {
-    min-height: 32px;
+    min-height: 28px;
   }
 
   .register-link {
-    margin-top: 8px;
+    margin-top: 6px;
   }
 }
 </style>
