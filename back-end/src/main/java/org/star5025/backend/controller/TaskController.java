@@ -13,6 +13,7 @@ import org.star5025.backend.entity.Task;
 import org.star5025.backend.result.PageResult;
 import org.star5025.backend.result.Result;
 import org.star5025.backend.service.TaskService;
+import org.star5025.backend.vo.TaskDashboardVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -124,5 +125,14 @@ public class TaskController {
         log.info("正在查询Id为{}的任务",taskId);
         Task task = taskService.getTaskById(taskId);
         return Result.success(task);
+    }
+
+    /**
+     * 当前用户任务看板统计
+     */
+    @GetMapping("/dashboard")
+    @ApiOperation("获取当前用户任务看板统计")
+    public Result<TaskDashboardVO> dashboard() {
+        return Result.success(taskService.getDashboard());
     }
 }

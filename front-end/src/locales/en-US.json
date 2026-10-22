@@ -149,6 +149,23 @@
     "ackFailed": "Failed to acknowledge reminder",
     "retryFailed": "Reminder delivery failed; it will be retried automatically"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "total": "All Tasks",
+    "pending": "Pending",
+    "completed": "Completed",
+    "favourite": "Favourites",
+    "completionRate": "Completion Rate",
+    "attention": "Due Alerts",
+    "overdue": "Overdue",
+    "dueToday": "Due Today",
+    "dueNext7": "Due in 7 Days",
+    "dueDistribution": "Due in the Next 7 Days",
+    "noDueSoon": "No tasks due in the next 7 days",
+    "loadFailed": "Failed to load dashboard",
+    "retry": "Retry"
+  },
   "todoDetail": {
     "repeatRule": "Repeat rule",
     "repeatNONE": "Does not repeat",

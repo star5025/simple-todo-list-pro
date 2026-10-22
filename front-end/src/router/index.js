@@ -6,6 +6,7 @@ import TodoList from '@/components/TodoList.vue'
 import TodoDetail from '@/components/TodoDetail.vue'
 import AddTodo from '@/components/AddTodo.vue'
 import UserInfo from '@/components/UserInfo.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,11 @@ const router = createRouter({
           path: 'list',
           name: 'TodoList',
           component: TodoList
+        },
+        {
+          path: 'dashboard',
+          name: 'Dashboard',
+          component: Dashboard
         },
         {
           path: 'todo/:id',

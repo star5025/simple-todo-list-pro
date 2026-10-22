@@ -149,6 +149,23 @@
     "ackFailed": "确认提醒失败",
     "retryFailed": "提醒处理失败，将自动重试"
   },
+  "dashboard": {
+    "title": "数据看板",
+    "overview": "概览",
+    "total": "全部任务",
+    "pending": "未完成",
+    "completed": "已完成",
+    "favourite": "收藏",
+    "completionRate": "完成率",
+    "attention": "到期提醒",
+    "overdue": "已逾期",
+    "dueToday": "今天到期",
+    "dueNext7": "未来7天到期",
+    "dueDistribution": "未来7天到期分布",
+    "noDueSoon": "未来7天没有到期的任务",
+    "loadFailed": "看板加载失败",
+    "retry": "重试"
+  },
   "todoDetail": {
     "repeatRule": "重复规则",
     "repeatNONE": "不重复",

@@ -233,7 +233,7 @@ npm run dev
 
 By default, the frontend service will run at http://localhost:5173
 
-> 🛠️**System Test Account and Password**: test 123456
+> 🛠️**System Test Account and Password**: test 123456. Demo account demo / demo123456, with idempotent sample tasks in `back-end/src/main/resources/db/demo-data.sql` (run only against an isolated local database).
 
 ## <span id="backend-api-debugging-method">Backend API Debugging Method</span>
 

@@ -3,6 +3,8 @@ package org.star5025.backend.mapper;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.*;
 import org.star5025.backend.entity.Task;
+import org.star5025.backend.vo.DashboardDayCount;
+import org.star5025.backend.vo.TaskDashboardVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -116,4 +118,33 @@ public interface TaskMapper {
      */
     @Update("update task set task_name = #{taskName}, status = #{status}, description = #{description}, start_time = #{startTime}, remind_time = #{remindTime}, due_time = #{dueTime}, favourite = #{favourite} WHERE task_id = #{taskId} AND user_id = #{userId}")
     int updateTask(Task newTask);
+
+    /**
+     * 看板概览：当前用户任务总数、未完成、已完成、收藏数。
+     */
+    @Select("SELECT COUNT(*) total, " +
+            "IFNULL(SUM(status = 0), 0) pending, " +
+            "IFNULL(SUM(status = 1), 0) completed, " +
+            "IFNULL(SUM(favourite = 1), 0) favourite " +
+            "FROM task WHERE user_id = #{userId}")
+    TaskDashboardVO selectDashboardCounts(@Param("userId") Long userId);
+
+    /**
+     * 看板提醒：逾期未完成、今天到期、未来 7 天到期数量。
+     */
+    @Select("SELECT " +
+            "IFNULL(SUM(status = 0 AND due_time < NOW()), 0) overduePending, " +
+            "IFNULL(SUM(status = 0 AND DATE(due_time) = CURDATE()), 0) dueToday, " +
+            "IFNULL(SUM(status = 0 AND due_time >= CURDATE() AND due_time < DATE_ADD(CURDATE(), INTERVAL 7 DAY)), 0) dueNext7 " +
+            "FROM task WHERE user_id = #{userId}")
+    TaskDashboardVO selectDashboardDueStats(@Param("userId") Long userId);
+
+    /**
+     * 看板分布：未来 7 天（含今天）每天到期的未完成任务数量。
+     */
+    @Select("SELECT DATE(due_time) date, COUNT(*) count FROM task " +
+            "WHERE user_id = #{userId} AND status = 0 " +
+            "AND due_time >= CURDATE() AND due_time < DATE_ADD(CURDATE(), INTERVAL 7 DAY) " +
+            "GROUP BY DATE(due_time) ORDER BY 1")
+    List<DashboardDayCount> selectDueByDay(@Param("userId") Long userId);
 }

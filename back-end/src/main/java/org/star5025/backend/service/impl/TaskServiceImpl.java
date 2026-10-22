@@ -21,6 +21,7 @@ import org.star5025.backend.service.TaskService;
 import org.star5025.backend.service.ReminderService;
 import org.star5025.backend.mapper.TaskScheduleMapper;
 import org.star5025.backend.service.UserService;
+import org.star5025.backend.vo.TaskDashboardVO;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -194,6 +195,21 @@ public class TaskServiceImpl implements TaskService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
         }
         return task;
+    }
+
+    @Override
+    public TaskDashboardVO getDashboard() {
+        Long userId = requireCurrentUserId();
+        TaskDashboardVO dashboard = taskMapper.selectDashboardCounts(userId);
+        TaskDashboardVO dueStats = taskMapper.selectDashboardDueStats(userId);
+        dashboard.setOverduePending(dueStats.getOverduePending());
+        dashboard.setDueToday(dueStats.getDueToday());
+        dashboard.setDueNext7(dueStats.getDueNext7());
+        long total = dashboard.getTotal() == null ? 0 : dashboard.getTotal();
+        long completed = dashboard.getCompleted() == null ? 0 : dashboard.getCompleted();
+        dashboard.setCompletionRate(total == 0 ? 0.0 : Math.round(completed * 1000.0 / total) / 10.0);
+        dashboard.setDueByDay(taskMapper.selectDueByDay(userId));
+        return dashboard;
     }
 
     private Long requireCurrentUserId() {

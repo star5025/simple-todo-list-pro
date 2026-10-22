@@ -4,6 +4,9 @@
       <router-link to="/home/list" class="list-link" @click="$emit('navigate')">
         <el-icon><List /></el-icon>{{ t('todoList.title') }}
       </router-link>
+      <router-link to="/home/dashboard" class="list-link" @click="$emit('navigate')">
+        <el-icon><DataAnalysis /></el-icon>{{ t('dashboard.title') }}
+      </router-link>
       <!-- 新增待办按钮 -->
       <div class="add-todo-section">
         <button 
@@ -182,7 +185,8 @@ import {
   Filter,
   User,
   Star,
-  List
+  List,
+  DataAnalysis
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'

@@ -5,6 +5,7 @@ import org.star5025.backend.dto.TaskPageQueryDTO;
 import org.star5025.backend.dto.TaskPatchDTO;
 import org.star5025.backend.entity.Task;
 import org.star5025.backend.result.PageResult;
+import org.star5025.backend.vo.TaskDashboardVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,4 +63,9 @@ public interface TaskService {
      * @return
      */
     Task getTaskById(Long taskId);
+
+    /**
+     * 获取当前登录用户的看板统计。
+     */
+    TaskDashboardVO getDashboard();
 }
