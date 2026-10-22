@@ -104,6 +104,7 @@
   "todoList": {
     "title": "Todos",
     "compact": "Compact view",
+    "fetchFailed": "Failed to load todos. Please retry.",
     "pageSize": "Items per page",
     "showDate": "Show Date",
     "hideDate": "Hide Date",
@@ -173,6 +174,9 @@
     "retry": "Retry"
   },
   "calendar": {
+    "loading": "Loading tasks…",
+    "loadFailed": "Failed to load tasks",
+    "retry": "Retry",
     "title": "Calendar",
     "view": "Switch view",
     "month": "Month",

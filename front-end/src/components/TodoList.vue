@@ -222,13 +222,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch, computed, onActivated, onUnmounted, nextTick } from 'vue'
+import { ref, inject, watch, computed, onActivated, onDeactivated, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
+import { toTaskDateOnly, parseTaskDate } from '@/utils/taskDates'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -306,7 +307,7 @@ const groupedTodos = computed(() => {
     let timeStr = null
     if (timeValue) {
       try {
-        timeStr = new Date(timeValue).toISOString().split('T')[0]
+        timeStr = toTaskDateOnly(timeValue)
       } catch (e) {
         console.error('日期解析错误:', e)
       }
@@ -338,15 +339,15 @@ const formatDateHeader = (dateStr) => {
     return t('todoList.unspecifiedDate')
   }
   
-  const date = new Date(dateStr)
+  const date = parseTaskDate(dateStr)
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
   
   // 格式化日期为 YYYY-MM-DD
-  const formattedDate = date.toISOString().split('T')[0]
-  const todayStr = today.toISOString().split('T')[0]
-  const tomorrowStr = tomorrow.toISOString().split('T')[0]
+  const formattedDate = toTaskDateOnly(date)
+  const todayStr = toTaskDateOnly(today)
+  const tomorrowStr = toTaskDateOnly(tomorrow)
   
   if (formattedDate === todayStr) {
     return t('todoList.today')
@@ -458,107 +459,58 @@ const cancelBatchMode = () => {
   document.removeEventListener('keydown', handleKeydown)
 }
 
-// 监听筛选条件变化
-watch(filterParams, (newParams) => {
-  console.log('筛选条件变化:', newParams)
+// 分页由列表自身管理；筛选只提供查询条件，避免旧页码覆盖当前页。
+let requestSequence = 0
+let listActive = false
+const firstListLoad = ref(true)
+watch(filterParams, () => {
   currentPage.value = 1
-  // 合并默认筛选条件和传入的筛选条件
-  const mergedParams = {
-    status: false, // 始终保持只显示未完成的待办事项
-    ...newParams
-  }
-  fetchTodos(mergedParams)
+  selectedTodoIds.value = []
+  if (listActive) fetchTodos()
 }, { deep: true })
 
-// 监听路由变化，确保在返回到待办列表时重新加载数据
-watch(
-  () => route.name,
-  (newRouteName) => {
-    if (newRouteName === 'TodoList') {
-      // 当路由切换到待办列表时，重新获取数据
-      fetchTodos(defaultFilterParams.value)
-    }
-  }
-)
-
-// 添加对路由全路径的监听，确保更可靠的组件更新
-watch(
-  () => route.fullPath,
-  (newPath) => {
-    if (newPath.startsWith('/home/list')) {
-      // 当路由切换到待办列表时，重新获取数据
-      fetchTodos(defaultFilterParams.value)
-    }
-  }
-)
-
-// 使用onActivated钩子处理keep-alive缓存情况
 onActivated(() => {
-  // 当组件被激活时（从缓存中恢复），重新获取数据
-  // 使用nextTick确保在DOM更新后执行
-  nextTick(() => {
-    fetchTodos(defaultFilterParams.value)
-  })
+  listActive = true
+  if (batchMode.value) document.addEventListener('keydown', handleKeydown)
+  fetchTodos()
+})
+onDeactivated(() => {
+  listActive = false
+  requestSequence++
+  loading.value = false
+  document.removeEventListener('keydown', handleKeydown)
 })
 
-// 获取待办列表：仅首次加载显示骨架屏，后续筛选/分页/刷新静默替换，避免闪动
-const firstListLoad = ref(true)
-const fetchTodos = async (filters = {}) => {
-  const showSkeleton = firstListLoad.value
-  if (showSkeleton) loading.value = true
+const fetchTodos = async () => {
+  const sequence = ++requestSequence
+  if (firstListLoad.value) loading.value = true
+  const { page: ignoredPage, pageSize: ignoredSize, ...filters } = defaultFilterParams.value
   try {
-    // 确保直接使用 currentPage 变量的值
-    const params = {
-      page: currentPage.value,  // 直接使用 currentPage 变量
-      pageSize: pageSize.value,
-      ...filters
-    }
-    
-    // 只有当filters中明确设置了status时才传递，否则不传递该参数
-    if (filters.hasOwnProperty('status')) {
-      params.status = filters.status;
-    }
-    
-    console.log('发送请求参数:', params) // 调试信息
-    console.log('当前 currentPage 值:', currentPage.value) // 调试信息
-    
-    const response = await request.get('/task/pageQuery', params)
-    
-    console.log('后端返回的完整响应:', response) // 调试信息
-    
+    const response = await request.get('/task/pageQuery', {
+      ...filters, page: currentPage.value, pageSize: pageSize.value
+    })
+    if (sequence !== requestSequence || !listActive) return
     if (response.code === 1) {
-      // 确保favourite字段正确设置
-      const records = response.data.records.map(todo => {
-        return {
-          ...todo,
-          favourite: todo.favourite || false
-        }
-      })
-      
-      todos.value = records
+      todos.value = response.data.records.map(todo => ({ ...todo, favourite: !!todo.favourite }))
       total.value = response.data.total
-      
-      // 打印第一条记录来检查字段
-      if (records && records.length > 0) {
-        console.log('第一条待办事项:', records[0])
+      if (currentPage.value > 1 && !todos.value.length && total.value > 0) {
+        currentPage.value = Math.ceil(total.value / pageSize.value)
+        return fetchTodos()
       }
+      firstListLoad.value = false
     } else {
       ElMessage.error(response.msg || t('todoList.fetchFailed'))
     }
-  } catch (error) {
-    console.error('获取待办列表失败')
-    ElMessage.error(t('userInfo.operationFailed') || (t('todoList.fetchFailed') + ': ' + error.message))
+  } catch {
+    if (sequence === requestSequence && listActive) ElMessage.error(t('todoList.fetchFailed'))
   } finally {
-    if (showSkeleton) {
-      loading.value = false
-      firstListLoad.value = false
-    }
+    if (sequence === requestSequence) loading.value = false
   }
 }
 
 // 更新待办状态
 const updateTodoStatus = async (todo, newStatus) => {
-  const key = `status:${todo.taskId}`
+  const key = todo.taskId
   if (pendingTaskActions.has(key)) return
   pendingTaskActions.add(key)
   try {
@@ -614,18 +566,13 @@ const getCountdownText = (todo) => {
   
   const now = new Date()
   const dueDate = new Date(todo.dueTime)
-  const diffTime = dueDate - now
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-  if (diffTime < 0) {
-    return t('todoList.daysOverdue', [Math.abs(diffDays)])
-  } else if (diffDays === 0) {
-    return t('todoList.dueToday')
-  } else if (diffDays === 1) {
-    return t('todoList.dueTomorrow')
-  } else {
-    return t('todoList.daysUntilDue', [diffDays])
-  }
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  const dueDay = Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
+  const days = Math.round((dueDay - today) / 86400000)
+  if (dueDate < now) return t('todoList.daysOverdue', [Math.max(1, -days)])
+  if (days === 0) return t('todoList.dueToday')
+  if (days === 1) return t('todoList.dueTomorrow')
+  return t('todoList.daysUntilDue', [days])
 }
 
 // 获取倒计时标签类型
@@ -651,32 +598,17 @@ const getCountdownTagType = (todo) => {
 }
 
 // 分页相关方法
-const handleSizeChange = (val) => {
-  console.log('页面大小改变:', val) // 调试信息
+const handleSizeChange = val => {
   pageSize.value = val
   currentPage.value = 1
-  // 合并默认筛选条件
-  const mergedParams = {
-    status: false, // 始终保持只显示未完成的待办事项
-    ...filterParams.value
-  }
-  mergedParams.pageSize = val // 确保使用正确的页面大小
-  fetchTodos(mergedParams)
+  selectedTodoIds.value = []
+  fetchTodos()
 }
 
-const handleCurrentChange = (val) => {
-  console.log('当前页改变:', val) // 调试信息
-  console.log('设置 currentPage 为:', val) // 调试信息
+const handleCurrentChange = val => {
   currentPage.value = val
-  // 直接调用 fetchTodos，确保使用更新后的 currentPage 值
-  // 合并默认筛选条件
-  const mergedParams = {
-    status: false, // 始终保持只显示未完成的待办事项
-    ...filterParams.value
-  }
-  mergedParams.page = val // 确保使用正确的页码
-  mergedParams.pageSize = pageSize.value // 确保使用正确的页面大小
-  fetchTodos(mergedParams)
+  selectedTodoIds.value = []
+  fetchTodos()
 }
 
 // 跳转到详情页
@@ -739,6 +671,8 @@ const deleteTodo = async (todo) => {
       }
       // 更新总数
       total.value -= 1
+      window.dispatchEvent(new CustomEvent('favouriteChanged'))
+      await fetchTodos()
     } else {
       ElMessage.error(response.msg || t('todoList.deleteFailed'))
     }
@@ -768,7 +702,7 @@ const batchDeleteTodos = async () => {
       // 移除键盘事件监听
       document.removeEventListener('keydown', handleKeydown)
       // 重新获取数据
-      fetchTodos(defaultFilterParams.value)
+      fetchTodos()
     } else {
       ElMessage.error(response.msg || t('todoList.batchDeleteFailed'))
     }
@@ -785,7 +719,7 @@ const poppingTaskId = ref(null)
 
 // 切换收藏状态
 const toggleFavourite = async (todo) => {
-  const key = `fav:${todo.taskId}`
+  const key = todo.taskId
   if (pendingTaskActions.has(key)) return
   pendingTaskActions.add(key)
   try {
@@ -795,18 +729,8 @@ const toggleFavourite = async (todo) => {
     }, 450)
     const newFavouriteStatus = !todo.favourite;
     
-    // 发送完整数据对象而不是仅发送变化的字段
-    const response = await request.patch(`/task/${todo.taskId}`, {
-      taskId: todo.taskId,
-      taskName: todo.taskName,
-      description: todo.description || null,
-      status: todo.status,
-      startTime: todo.startTime || null,
-      dueTime: todo.dueTime || null,
-      remindTime: todo.remindTime || null,
-      favourite: newFavouriteStatus // 更新收藏状态
-    });
-    
+    const response = await request.patch(`/task/${todo.taskId}`, { favourite: newFavouriteStatus });
+
     if (response.code === 1) {
       // 更新本地状态
       todo.favourite = newFavouriteStatus;
@@ -850,12 +774,6 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
 
-// 组件挂载时获取数据
-onMounted(() => {
-  nextTick(() => {
-    fetchTodos(defaultFilterParams.value)
-  })
-})
 </script>
 
 <style scoped>
@@ -1023,6 +941,9 @@ onMounted(() => {
 .favourite-icon.favourited {
   color: var(--el-color-primary);
 }
+.icon-button:hover { background: var(--el-color-primary-light-9); }
+.delete-icon:hover { color: var(--el-color-danger); background: var(--el-color-danger-light-9); }
+.task-count { font-variant-numeric: tabular-nums; }
 
 .favourite-icon.pop {
   animation: star-pop 0.32s ease;

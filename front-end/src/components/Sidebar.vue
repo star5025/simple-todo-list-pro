@@ -196,7 +196,7 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import request from '@/utils/request'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const isListPage = computed(() => route.path === '/home/list')
@@ -291,9 +291,12 @@ const applyFilters = () => {
 
 // 获取收藏的待办事项
 const firstFavouriteLoad = ref(true)
+let favouriteRequest = 0
+let disposed = false
 let favouriteRefreshTimer = null
 
 const fetchFavouriteTodos = async (silent = false) => {
+  const sequence = ++favouriteRequest
   const showSkeleton = !silent && firstFavouriteLoad.value
   if (showSkeleton) loadingFavourites.value = true
   try {
@@ -305,6 +308,7 @@ const fetchFavouriteTodos = async (silent = false) => {
       orderBy: 'createdTimeDesc' // 按创建时间倒序排列，确保显示最新的收藏
     })
     
+    if (disposed || sequence !== favouriteRequest) return
     if (response.code === 1) {
       // 确保favourite字段正确设置
       favouriteTodos.value = response.data.records.map(todo => ({
@@ -317,7 +321,7 @@ const fetchFavouriteTodos = async (silent = false) => {
   } catch (error) {
     console.error('获取收藏待办失败')
   } finally {
-    if (showSkeleton) {
+    if (!disposed && sequence === favouriteRequest) {
       loadingFavourites.value = false
       firstFavouriteLoad.value = false
     }
@@ -330,18 +334,11 @@ const formatDueTime = (dueTime) => {
   const date = new Date(dueTime)
   const today = new Date()
   
-  // 如果是今天
-  if (date.toDateString() === today.toDateString()) {
-    return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
-  
-  // 如果是今年
-  if (date.getFullYear() === today.getFullYear()) {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
-  }
-  
-  // 其他情况显示完整日期
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  return new Intl.DateTimeFormat(locale.value, {
+    month: 'short', day: 'numeric',
+    ...(date.getFullYear() !== today.getFullYear() ? { year: 'numeric' } : {})
+  }).format(date)
+
 }
 
 // 跳转到待办详情
@@ -352,6 +349,7 @@ const goToTodoDetail = (taskId) => {
 
 // 处理收藏状态变化：合并连续操作，静默刷新，避免骨架屏闪烁
 const handleFavouriteChange = () => {
+  favouriteRequest++
   window.clearTimeout(favouriteRefreshTimer)
   favouriteRefreshTimer = window.setTimeout(() => {
     fetchFavouriteTodos(true)
@@ -369,6 +367,8 @@ onMounted(() => {
 
 // 组件卸载时移除事件监听
 onUnmounted(() => {
+  disposed = true
+  favouriteRequest++
   window.removeEventListener('favouriteChanged', handleFavouriteChange)
   window.clearTimeout(favouriteRefreshTimer)
 })

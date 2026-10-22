@@ -104,6 +104,7 @@
   "todoList": {
     "title": "待办事项",
     "compact": "简洁显示",
+    "fetchFailed": "待办列表加载失败，请重试",
     "pageSize": "每页条数",
     "showDate": "显示日期",
     "hideDate": "隐藏日期",
@@ -172,6 +173,9 @@
     "retry": "重试"
   },
   "calendar": {
+    "loading": "正在加载待办事项…",
+    "loadFailed": "待办事项加载失败",
+    "retry": "重试",
     "title": "日历",
     "view": "切换视图",
     "month": "月",

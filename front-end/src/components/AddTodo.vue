@@ -251,6 +251,7 @@ const handleSubmit = async () => {
         const res = await request.post('/task/', requestData)
         
         if (res.code === 1) {
+          window.dispatchEvent(new CustomEvent('favouriteChanged'))
           ElMessage.success(t('addTodo.success'))
           // 重置表单
           resetForm()

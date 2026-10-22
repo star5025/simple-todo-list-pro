@@ -383,6 +383,7 @@ const saveEdit = async () => {
     if (disposed) return
     
     if (response.code === 1) {
+      window.dispatchEvent(new CustomEvent('favouriteChanged'))
       ElMessage.success(t('todoDetail.updateSuccess'))
       isEditing.value = false
       // 重新获取待办详情

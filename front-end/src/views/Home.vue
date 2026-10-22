@@ -94,6 +94,8 @@ const reminderPoller = createReminderPoller({
   acknowledge: async ({ taskId, revision }) => {
     const response = await request.post(`/reminders/${taskId}/ack`, { revision })
     if (response.code !== 1) throw new Error(response.msg || t('reminders.ackFailed'))
+    const item = reminders.value.find(entry => entry.key === `${taskId}:${revision}`)
+    if (item) item.acked = true
   },
   notify: (reminder) => {
     // 聚合到可翻阅的提醒面板，而不是逐个弹出通知。
@@ -101,10 +103,9 @@ const reminderPoller = createReminderPoller({
     if (!reminders.value.some(item => item.key === key)) {
       reminders.value.push({ key, taskId: reminder.taskId, taskName: reminder.taskName, acked: false })
     }
-    // ack 完成后标记该条为已确认，保留在面板中供翻阅。
+    // close 用于版本失效和退出，不是确认成功回调。
     return () => {
-      const item = reminders.value.find(entry => entry.key === key)
-      if (item) item.acked = true
+      reminders.value = reminders.value.filter(entry => entry.key !== key)
     }
   },
   onError: () => console.error(t('reminders.retryFailed'))

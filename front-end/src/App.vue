@@ -1,8 +1,14 @@
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
 import Footer from './components/Footer.vue'
-import { onErrorCaptured, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, onErrorCaptured, ref, watch } from 'vue'
+import { ElConfigProvider, ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import zhCN from 'element-plus/es/locale/lang/zh-cn'
+import enUS from 'element-plus/es/locale/lang/en'
+
+const { locale } = useI18n()
+const elementLocale = computed(() => locale.value === 'zh-CN' ? zhCN : enUS)
 
 const route = useRoute()
 const hasError = ref(false)
@@ -28,6 +34,7 @@ const reloadPage = () => {
 </script>
 
 <template>
+  <ElConfigProvider :locale="elementLocale">
   <el-container class="app-container" direction="vertical">
     <el-container class="main-container" v-if="!hasError">
       <el-main class="content-main">
@@ -53,6 +60,7 @@ const reloadPage = () => {
     </el-container>
     <Footer />
   </el-container>
+  </ElConfigProvider>
 </template>
 
 <style scoped>

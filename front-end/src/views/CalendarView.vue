@@ -13,7 +13,12 @@
       </div>
     </div>
 
-    <div class="calendar-body">
+    <div class="calendar-body" :aria-busy="tasksLoading">
+      <p v-if="tasksLoading" class="calendar-status" role="status">{{ t('calendar.loading', locale === 'zh-CN' ? '正在加载待办事项…' : 'Loading tasks…') }}</p>
+      <div v-else-if="tasksError" class="calendar-status" role="alert">
+        <span>{{ t('calendar.loadFailed', locale === 'zh-CN' ? '待办事项加载失败' : 'Failed to load tasks') }}</span>
+        <button type="button" class="nav-button" @click="scheduleFetch">{{ t('calendar.retry', locale === 'zh-CN' ? '重试' : 'Retry') }}</button>
+      </div>
       <!-- 月份视图 -->
       <div v-if="view === 'month'" class="month-view" role="grid" :aria-label="title">
         <div class="weekday-row">
@@ -71,7 +76,9 @@
     <!-- 选中日期面板 -->
     <section v-if="selectedKey" class="day-panel" :aria-label="selectedLabel">
       <h3 class="day-panel-title">{{ selectedLabel }}</h3>
-      <ul v-if="selectedTasks.length" class="panel-task-list">
+      <p v-if="tasksLoading" class="day-panel-empty" role="status">{{ t('calendar.loading', locale === 'zh-CN' ? '正在加载待办事项…' : 'Loading tasks…') }}</p>
+      <p v-else-if="tasksError" class="day-panel-empty">{{ t('calendar.loadFailed', locale === 'zh-CN' ? '待办事项加载失败' : 'Failed to load tasks') }}</p>
+      <ul v-else-if="selectedTasks.length" class="panel-task-list">
         <li v-for="task in selectedTasks" :key="task.taskId">
           <button type="button" class="panel-task-item" :class="{ done: task.status }" @click="openTask(task.taskId)">
             <span class="panel-task-name">{{ task.taskName }}</span>
@@ -85,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -96,17 +103,18 @@ const router = useRouter()
 const view = ref('month')
 const cursor = ref(new Date())
 const selectedKey = ref(null)
-const selectedLabel = ref('')
 const tasks = ref([])
 const tasksLoading = ref(false)
+const tasksError = ref(false)
 let requestSequence = 0
+let disposed = false
 
 const startOfDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate())
 const keyOf = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const addDays = (date, days) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 const addMonths = (date, months) => new Date(date.getFullYear(), date.getMonth() + months, 1)
-const today = startOfDay(new Date())
-const todayKey = keyOf(today)
+const today = ref(startOfDay(new Date()))
+const todayKey = computed(() => keyOf(today.value))
 
 const weekdayLabels = computed(() => locale.value === 'zh-CN'
   ? ['一', '二', '三', '四', '五', '六', '日']
@@ -138,7 +146,7 @@ const monthDays = computed(() => {
     key: keyOf(date),
     number: date.getDate(),
     inMonth: date.getMonth() === first.getMonth(),
-    isToday: keyOf(date) === todayKey,
+    isToday: keyOf(date) === todayKey.value,
     count: tasksByKey.value[keyOf(date)]?.length || 0,
     label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
   }))
@@ -148,7 +156,7 @@ const weekDays = computed(() => rangeDays.value.map(date => ({
   key: keyOf(date),
   number: date.getDate(),
   weekday: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short' }).format(date),
-  isToday: keyOf(date) === todayKey,
+  isToday: keyOf(date) === todayKey.value,
   label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
 })))
 
@@ -165,31 +173,49 @@ const tasksByKey = computed(() => {
   return groups
 })
 
+const selectedLabel = computed(() => {
+  const date = rangeDays.value.find(day => keyOf(day) === selectedKey.value)
+  return date ? new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date) : ''
+})
 const selectedTasks = computed(() => selectedKey.value ? (tasksByKey.value[selectedKey.value] || []) : [])
 
 const formatStart = time => time ? new Date(time).toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : ''
 
-const fetchRange = async () => {
-  const days = rangeDays.value
+const fetchRange = async (seq, days) => {
+  if (disposed || seq !== requestSequence) return
   const from = days[0].toISOString()
   const to = addDays(days[days.length - 1], 1).toISOString()
-  const seq = ++requestSequence
-  tasksLoading.value = true
   try {
     const response = await request.get('/task/calendar', { from, to })
-    if (seq !== requestSequence) return
-    if (response.code === 1) tasks.value = response.data
+    if (disposed || seq !== requestSequence) return
+    if (response.code === 1 && Array.isArray(response.data)) {
+      tasks.value = response.data
+    } else {
+      tasksError.value = true
+    }
   } catch {
-    // 静默失败，保留旧数据
+    if (!disposed && seq === requestSequence) tasksError.value = true
   } finally {
-    if (seq === requestSequence) tasksLoading.value = false
+    if (!disposed && seq === requestSequence) tasksLoading.value = false
   }
 }
 
 let fetchTimer = null
 const scheduleFetch = () => {
+  if (disposed) return
+  const seq = ++requestSequence
+  const days = rangeDays.value
   window.clearTimeout(fetchTimer)
-  fetchTimer = window.setTimeout(fetchRange, 120)
+  tasks.value = []
+  tasksLoading.value = true
+  tasksError.value = false
+  if (selectedKey.value && !days.some(day => keyOf(day) === selectedKey.value)) {
+    selectedKey.value = null
+  }
+  fetchTimer = window.setTimeout(() => {
+    fetchTimer = null
+    fetchRange(seq, days)
+  }, 120)
 }
 
 const go = direction => {
@@ -197,18 +223,23 @@ const go = direction => {
 }
 
 const goToday = () => {
-  cursor.value = new Date()
-  select({ key: todayKey, label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(today) })
+  today.value = startOfDay(new Date())
+  cursor.value = today.value
+  select({ key: todayKey.value })
 }
 
 const select = day => {
   selectedKey.value = day.key
-  selectedLabel.value = day.label
 }
 
 const openTask = taskId => router.push(`/home/todo/${taskId}`)
 
-watch([view, cursor], scheduleFetch, { immediate: true })
+watch(rangeDays, scheduleFetch, { immediate: true, flush: 'sync' })
+onBeforeUnmount(() => {
+  disposed = true
+  ++requestSequence
+  window.clearTimeout(fetchTimer)
+})
 </script>
 
 <style scoped>
@@ -216,13 +247,16 @@ watch([view, cursor], scheduleFetch, { immediate: true })
 .calendar-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
 .view-switch { display: inline-flex; border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; overflow: hidden; background: var(--app-surface, #fff); }
 .view-button { min-height: 40px; padding: 0 16px; border: 0; background: transparent; color: var(--app-muted, #697586); font-size: 14px; cursor: pointer; }
-.view-button.active { background: var(--el-color-primary); color: #fff; }
+.view-button.active { background: var(--el-color-primary); color: #fff; font-weight: 600; }
+.view-button, .nav-button, .day-cell { transition: background-color .12s ease, border-color .12s ease; }
+.day-number, .day-badge, .week-day-number { font-variant-numeric: tabular-nums; }
 .calendar-title { margin: 0 auto 0 0; font-size: 18px; font-weight: 600; }
 .nav-actions { display: flex; gap: 6px; }
 .nav-button { min-height: 40px; padding: 0 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: var(--app-surface, #fff); color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .nav-button.icon { width: 40px; padding: 0; }
 .nav-button:hover { color: var(--el-color-primary); border-color: var(--el-color-primary); }
 .calendar-body { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 16px; }
+.calendar-status { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 12px; color: var(--app-muted, #697586); font-size: 14px; }
 .weekday-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 8px; }
 .weekday-cell { text-align: center; font-size: 12px; color: var(--app-muted, #697586); padding: 6px 0; }
 .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
