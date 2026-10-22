@@ -8,7 +8,7 @@
     <el-container class="main-container">
       <Sidebar v-if="!isMobile" />
       
-      <el-main class="main-content">
+      <el-main class="main-content" :class="{ 'locale-fade': localeSwitching }">
         <!-- 主页内容区域 -->
         <div class="home-content">
           <router-view v-slot="{ Component }">
@@ -47,7 +47,16 @@ const isMobile = useMediaQuery('(max-width: 760px)')
 const navigationOpen = ref(false)
 watch(() => route.fullPath, () => { navigationOpen.value = false })
 watch(isMobile, () => { navigationOpen.value = false })
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// 语言切换时仅内容区做轻微淡入，Header 与 Footer 不参与
+const localeSwitching = ref(false)
+let localeTimer = null
+watch(locale, () => {
+  localeSwitching.value = true
+  window.clearTimeout(localeTimer)
+  localeTimer = window.setTimeout(() => { localeSwitching.value = false }, 200)
+})
 
 // 创建筛选条件响应式引用，设置默认筛选条件
 const filterParams = ref({
@@ -131,6 +140,9 @@ onBeforeUnmount(() => {
 .main-content { padding: 32px; min-width: 0; overflow: visible; }
 .home-content { width: 100%; max-width: 1040px; margin: 0 auto; min-width: 0; }
 .el-fade-in-enter-active, .el-fade-in-leave-active { transition: opacity .12s ease; }
+/* 语言切换内容区轻微淡入，保持克制 */
+.locale-fade { animation: locale-fade 0.18s ease; }
+@keyframes locale-fade { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 @media (max-width: 1000px) { .main-content { padding: 24px; } }
 @media (max-width: 760px) { .main-content { padding: 16px 12px 24px; } }
 </style>
