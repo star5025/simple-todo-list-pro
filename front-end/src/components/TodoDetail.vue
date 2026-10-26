@@ -278,6 +278,17 @@ const toggleFavourite = async () => {
   }
 }
 
+const confirmText = (namedKey, plainKey, args) => {
+  const name = (localStorage.getItem('userName') || '').trim()
+  return name ? t(namedKey, [name, ...args]) : t(plainKey, args)
+}
+const messageBoxOptions = extra => ({
+  confirmButtonText: t('todoList.confirmAction'),
+  cancelButtonText: t('todoList.cancel'),
+  title: '',
+  ...extra
+})
+
 // 标记完成：与列表一致需要二次确认，完成后刷新详情以反映服务端状态
 const completeTodo = async () => {
   if (actionBusy.value || !todo.value) return
@@ -287,9 +298,9 @@ const completeTodo = async () => {
   }
   try {
     await ElMessageBox.confirm(
-      t('todoList.completeConfirmShort', [todo.value.taskName]),
-      t('todoList.completeConfirmation'),
-      { confirmButtonText: t('todoList.confirmAction'), cancelButtonText: t('todoList.cancel') }
+      confirmText('todoList.completeConfirmNamed', 'todoList.completeConfirmShort', [todo.value.taskName]),
+      '',
+      messageBoxOptions()
     )
   } catch {
     return
@@ -317,9 +328,9 @@ const confirmDeleteTodo = async () => {
   if (actionBusy.value || !todo.value) return
   try {
     await ElMessageBox.confirm(
-      t('todoList.deleteConfirmShort', [todo.value.taskName]),
-      t('todoList.deleteConfirmation'),
-      { confirmButtonText: t('todoList.confirmAction'), confirmButtonClass: 'el-button--danger', cancelButtonText: t('todoList.cancel') }
+      confirmText('todoList.deleteConfirmNamed', 'todoList.deleteConfirmShort', [todo.value.taskName]),
+      '',
+      messageBoxOptions({ confirmButtonClass: 'el-button--danger' })
     )
   } catch {
     return

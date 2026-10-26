@@ -566,6 +566,18 @@ const fetchTodos = async () => {
   }
 }
 
+// 弹窗文案：优先带用户名，未取到用户名时退回简短文案；标题留空
+const confirmText = (namedKey, plainKey, args) => {
+  const name = (localStorage.getItem('userName') || '').trim()
+  return name ? t(namedKey, [name, ...args]) : t(plainKey, args)
+}
+const messageBoxOptions = extra => ({
+  confirmButtonText: t('todoList.confirmAction'),
+  cancelButtonText: t('todoList.cancel'),
+  title: '',
+  ...extra
+})
+
 // 更新待办状态
 const updateTodoStatus = async (todo, newStatus) => {
   const key = todo.taskId
@@ -581,12 +593,9 @@ const updateTodoStatus = async (todo, newStatus) => {
 
     // 待办事项从未完成标记为完成的情况
     await ElMessageBox.confirm(
-      t('todoList.completeConfirmShort', [todo.taskName]),
-      t('todoList.completeConfirmation'),
-      {
-        confirmButtonText: t('todoList.confirmAction'),
-        cancelButtonText: t('todoList.cancel'),
-      }
+      confirmText('todoList.completeConfirmNamed', 'todoList.completeConfirmShort', [todo.taskName]),
+      '',
+      messageBoxOptions()
     );
     
     // 用户确认后执行状态更新，只发送状态字段
@@ -686,13 +695,9 @@ const goToDetail = (taskId) => {
 // 确认删除
 const confirmDelete = (todo) => {
   ElMessageBox.confirm(
-    t('todoList.deleteConfirmShort', [todo.taskName]),
-    t('todoList.deleteConfirmation'),
-    {
-      confirmButtonText: t('todoList.confirmAction'),
-      confirmButtonClass: 'el-button--danger',
-      cancelButtonText: t('todoList.cancel'),
-    }
+    confirmText('todoList.deleteConfirmNamed', 'todoList.deleteConfirmShort', [todo.taskName]),
+    '',
+    messageBoxOptions({ confirmButtonClass: 'el-button--danger' })
   ).then(() => {
     deleteTodo(todo)
   }).catch(() => {
@@ -708,13 +713,9 @@ const confirmBatchDelete = () => {
   }
 
   ElMessageBox.confirm(
-    t('todoList.batchDeleteConfirmShort', [selectedTodoIds.value.length]),
-    t('todoList.batchDeleteConfirmation'),
-    {
-      confirmButtonText: t('todoList.confirmAction'),
-      confirmButtonClass: 'el-button--danger',
-      cancelButtonText: t('todoList.cancel'),
-    }
+    confirmText('todoList.batchDeleteConfirmNamed', 'todoList.batchDeleteConfirmShort', [selectedTodoIds.value.length]),
+    '',
+    messageBoxOptions({ confirmButtonClass: 'el-button--danger' })
   ).then(() => {
     batchDeleteTodos()
   }).catch(() => {
