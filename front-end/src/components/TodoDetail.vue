@@ -71,7 +71,9 @@
                 @click="completeTodo"
               >
                 <span class="box" aria-hidden="true">
-                  <el-icon v-if="todo.status"><Check /></el-icon>
+                  <svg v-if="todo.status" class="check" viewBox="0 0 24 24">
+                    <polyline points="5 13 10 18 19 7" />
+                  </svg>
                 </span>
               </button>
               <h2 class="todo-title">{{ todo.taskName }}</h2>
@@ -228,7 +230,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { ArrowLeft, Check, Delete, Loading, Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Loading, Star, StarFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -299,8 +301,8 @@ const completeTodo = async () => {
     if (response.code === 1) {
       todo.value.status = true
       notifyFavouriteChanged()
+      // 直接更新本地状态，不重新拉取详情：避免整页加载动画，只保留顶部提示与勾选动画
       ElMessage.success(t('todoList.taskCompleted'))
-      fetchTodoDetail()
     } else {
       ElMessage.error(response.msg || t('todoList.statusUpdateFailed'))
     }
@@ -637,6 +639,34 @@ onBeforeUnmount(() => {
   justify-content: center;
   font-size: 12px;
   transition: background-color .12s ease, border-color .12s ease;
+}
+
+/* 打勾描边动画：仅在完成瞬间播放一次 */
+.complete-box .check {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: check-draw .32s .04s ease-out forwards;
+}
+
+.complete-box.done .box {
+  animation: box-pop .32s ease-out;
+}
+
+@keyframes check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes box-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.14); }
+  100% { transform: scale(1); }
 }
 
 .complete-box:hover:not(:disabled) .box {
