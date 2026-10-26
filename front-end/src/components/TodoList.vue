@@ -912,29 +912,29 @@ onUnmounted(() => {
 .todo-checkbox.just-completed :deep(.el-checkbox__inner) {
   background: var(--el-color-success);
   border-color: var(--el-color-success);
-  animation: list-box-pop .6s cubic-bezier(.2, .9, .25, 1.35);
+  animation: list-box-pop .45s cubic-bezier(.2, .9, .25, 1.25);
 }
 
 .todo-checkbox.just-completed :deep(.el-checkbox__inner::before) {
   content: '';
   position: absolute;
-  inset: -3px;
-  border: 3px solid var(--el-color-success);
-  border-radius: 6px;
-  animation: list-box-ring .65s ease-out forwards;
+  inset: -2px;
+  border: 2px solid rgba(103, 194, 58, .55);
+  border-radius: 5px;
+  animation: list-box-ring .5s ease-out forwards;
   pointer-events: none;
 }
 
 @keyframes list-box-pop {
-  0% { transform: scale(.6); }
-  45% { transform: scale(1.75); }
-  70% { transform: scale(.92); }
+  0% { transform: scale(.8); }
+  45% { transform: scale(1.35); }
+  70% { transform: scale(.97); }
   100% { transform: scale(1); }
 }
 
 @keyframes list-box-ring {
-  0% { opacity: .95; transform: scale(.85); }
-  100% { opacity: 0; transform: scale(2.8); }
+  0% { opacity: .6; transform: scale(.92); }
+  100% { opacity: 0; transform: scale(1.9); }
 }
 
 .selection-indicator {
