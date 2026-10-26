@@ -22,6 +22,7 @@ import org.star5025.backend.service.ReminderService;
 import org.star5025.backend.mapper.TaskScheduleMapper;
 import org.star5025.backend.service.UserService;
 import org.star5025.backend.vo.TaskDashboardVO;
+import org.star5025.backend.vo.DayTasksVO;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -219,6 +220,23 @@ public class TaskServiceImpl implements TaskService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "无效的日期范围");
         }
         return taskMapper.selectByStartRange(userId, from, to);
+    }
+
+    @Override
+    public DayTasksVO getDayTasks(LocalDateTime from, LocalDateTime to) {
+        Long userId = requireCurrentUserId();
+        requireDayRange(from, to);
+        return new DayTasksVO(
+                taskMapper.selectByStartRange(userId, from, to),
+                taskMapper.selectByDueRange(userId, from, to));
+    }
+
+    // 单日视图允许跨时区下的 23/25 小时日，但拒绝任意跨度的超大查询。
+    private void requireDayRange(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null || !to.isAfter(from)
+                || java.time.Duration.between(from, to).compareTo(java.time.Duration.ofHours(48)) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "无效的日期范围");
+        }
     }
 
     private Long requireCurrentUserId() {

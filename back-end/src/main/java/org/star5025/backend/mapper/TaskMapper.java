@@ -160,4 +160,17 @@ public interface TaskMapper {
     List<Task> selectByStartRange(@Param("userId") Long userId,
                                   @Param("from") LocalDateTime from,
                                   @Param("to") LocalDateTime to);
+
+    /**
+     * 日历当日视图：按截止时间落在 [from, to) 范围内的任务（UTC）。
+     */
+    @Select("SELECT task_id AS taskId, task_name AS taskName, status, description, " +
+            "created_time AS createdTime, start_time AS startTime, remind_time AS remindTime, " +
+            "due_time AS dueTime, favourite " +
+            "FROM task WHERE user_id = #{userId} AND due_time IS NOT NULL " +
+            "AND due_time >= #{from} AND due_time < #{to} " +
+            "ORDER BY due_time, task_id")
+    List<Task> selectByDueRange(@Param("userId") Long userId,
+                                @Param("from") LocalDateTime from,
+                                @Param("to") LocalDateTime to);
 }

@@ -173,6 +173,16 @@
     "loadFailed": "Failed to load dashboard",
     "retry": "Retry"
   },
+  "dayView": {
+    "back": "Back to calendar",
+    "started": "Starting that day",
+    "due": "Due that day",
+    "empty": "No todos",
+    "loading": "Loading tasks…",
+    "loadFailed": "Failed to load tasks",
+    "retry": "Retry",
+    "invalidDate": "Invalid date"
+  },
   "calendar": {
     "loading": "Loading tasks…",
     "loadFailed": "Failed to load tasks",

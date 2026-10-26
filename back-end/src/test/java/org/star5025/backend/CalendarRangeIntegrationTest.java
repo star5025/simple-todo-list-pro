@@ -87,5 +87,33 @@ class CalendarRangeIntegrationTest {
         mvc.perform(get("/api/task/calendar").header("token", tokenA)
                 .param("from", "2026-04-01T00:00:00Z").param("to", "2026-03-01T00:00:00Z"))
                 .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/task/day").header("token", tokenA)
+                .param("from", "2026-03-01T00:00:00Z").param("to", "2026-03-10T00:00:00Z"))
+                .andExpect(status().isBadRequest());
+    }
+
+    private void dueTask(long owner, String name, LocalDateTime due) {
+        db.update("INSERT INTO task(task_name,status,created_time,start_time,due_time,user_id,favourite) VALUES(?,0,NOW(),NULL,?,?,0)", name, due, owner);
+    }
+
+    @Test
+    void dayViewSplitsTasksStartingAndDueThatDayForCurrentUserOnly() throws Exception {
+        LocalDateTime from = LocalDateTime.of(2026, 5, 10, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 5, 11, 0, 0);
+        task(userA, "starts-today", LocalDateTime.of(2026, 5, 10, 9, 0));
+        task(userA, "starts-tomorrow", LocalDateTime.of(2026, 5, 11, 9, 0));
+        dueTask(userA, "ends-today", LocalDateTime.of(2026, 5, 10, 18, 0));
+        dueTask(userA, "ends-tomorrow", LocalDateTime.of(2026, 5, 11, 0, 0));
+        task(userB, "foreign-starts-today", LocalDateTime.of(2026, 5, 10, 9, 0));
+        dueTask(userB, "foreign-ends-today", LocalDateTime.of(2026, 5, 10, 18, 0));
+
+        JsonNode data = json.readTree(mvc.perform(get("/api/task/day")
+                .param("from", from + "Z").param("to", to + "Z").header("token", tokenA))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("data");
+
+        assertEquals(1, data.path("started").size());
+        assertEquals("starts-today", data.path("started").get(0).path("taskName").asText());
+        assertEquals(1, data.path("due").size());
+        assertEquals("ends-today", data.path("due").get(0).path("taskName").asText());
     }
 }

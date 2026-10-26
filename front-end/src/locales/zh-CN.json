@@ -172,6 +172,16 @@
     "loadFailed": "看板加载失败",
     "retry": "重试"
   },
+  "dayView": {
+    "back": "返回日历",
+    "started": "当日开始",
+    "due": "当日结束",
+    "empty": "暂无待办事项",
+    "loading": "正在加载待办事项…",
+    "loadFailed": "待办事项加载失败",
+    "retry": "重试",
+    "invalidDate": "日期无效"
+  },
   "calendar": {
     "loading": "正在加载待办事项…",
     "loadFailed": "待办事项加载失败",

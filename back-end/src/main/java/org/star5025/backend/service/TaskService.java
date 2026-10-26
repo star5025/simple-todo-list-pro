@@ -6,6 +6,7 @@ import org.star5025.backend.dto.TaskPatchDTO;
 import org.star5025.backend.entity.Task;
 import org.star5025.backend.result.PageResult;
 import org.star5025.backend.vo.TaskDashboardVO;
+import org.star5025.backend.vo.DayTasksVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -76,4 +77,9 @@ public interface TaskService {
      * 获取当前用户开始时间落在 [from, to) 范围内的任务（日历视图）。
      */
     List<Task> getCalendarTasks(LocalDateTime from, LocalDateTime to);
+
+    /**
+     * 获取当前用户开始或截止时间落在 [from, to) 范围内的任务（日历当日视图）。
+     */
+    DayTasksVO getDayTasks(LocalDateTime from, LocalDateTime to);
 }

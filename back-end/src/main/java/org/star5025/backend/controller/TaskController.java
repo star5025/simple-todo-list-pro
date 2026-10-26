@@ -15,6 +15,7 @@ import org.star5025.backend.result.PageResult;
 import org.star5025.backend.result.Result;
 import org.star5025.backend.service.TaskService;
 import org.star5025.backend.vo.TaskDashboardVO;
+import org.star5025.backend.vo.DayTasksVO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -146,5 +147,16 @@ public class TaskController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return Result.success(taskService.getCalendarTasks(from, to));
+    }
+
+    /**
+     * 日历当日视图：分别返回当天开始与当天截止的任务
+     */
+    @GetMapping("/day")
+    @ApiOperation("查询某天开始和截止的任务")
+    public Result<DayTasksVO> day(
+            @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return Result.success(taskService.getDayTasks(from, to));
     }
 }

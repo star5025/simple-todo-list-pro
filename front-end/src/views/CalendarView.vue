@@ -30,10 +30,9 @@
             :key="day.key"
             type="button"
             class="day-cell"
-            :class="{ 'outside': !day.inMonth, 'today': day.isToday, 'selected': selectedKey === day.key }"
-            :aria-pressed="selectedKey === day.key"
+            :class="{ 'outside': !day.inMonth, 'today': day.isToday }"
             :aria-label="`${day.label}${day.count ? ' · ' + day.count : ''}`"
-            @click="select(day)"
+            @click="openDay(day)"
           >
             <span class="day-number">{{ day.number }}</span>
             <span v-if="day.count" class="day-badge" aria-hidden="true">{{ day.count }}</span>
@@ -48,14 +47,13 @@
           v-for="day in weekDays"
           :key="day.key"
           class="week-day"
-          :class="{ 'today': day.isToday, 'selected': selectedKey === day.key }"
+          :class="{ 'today': day.isToday }"
           role="button"
           tabindex="0"
-          :aria-pressed="selectedKey === day.key"
           :aria-label="day.label"
-          @click="select(day)"
-          @keydown.enter.prevent="select(day)"
-          @keydown.space.prevent="select(day)"
+          @click="openDay(day)"
+          @keydown.enter.prevent="openDay(day)"
+          @keydown.space.prevent="openDay(day)"
         >
           <div class="week-day-header">
             <span class="week-day-name">{{ day.weekday }}</span>
@@ -73,21 +71,6 @@
       </div>
     </div>
 
-    <!-- 选中日期面板 -->
-    <section v-if="selectedKey" class="day-panel" :aria-label="selectedLabel">
-      <h3 class="day-panel-title">{{ selectedLabel }}</h3>
-      <p v-if="tasksLoading" class="day-panel-empty" role="status">{{ t('calendar.loading', locale === 'zh-CN' ? '正在加载待办事项…' : 'Loading tasks…') }}</p>
-      <p v-else-if="tasksError" class="day-panel-empty">{{ t('calendar.loadFailed', locale === 'zh-CN' ? '待办事项加载失败' : 'Failed to load tasks') }}</p>
-      <ul v-else-if="selectedTasks.length" class="panel-task-list">
-        <li v-for="task in selectedTasks" :key="task.taskId">
-          <button type="button" class="panel-task-item" :class="{ done: task.status }" @click="openTask(task.taskId)">
-            <span class="panel-task-name">{{ task.taskName }}</span>
-            <span class="panel-task-time">{{ formatStart(task.startTime) }}</span>
-          </button>
-        </li>
-      </ul>
-      <p v-else class="day-panel-empty">{{ t('calendar.noTodosYet') }}</p>
-    </section>
   </div>
 </template>
 
@@ -102,7 +85,6 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const view = ref('month')
 const cursor = ref(new Date())
-const selectedKey = ref(null)
 const tasks = ref([])
 const tasksLoading = ref(false)
 const tasksError = ref(false)
@@ -173,14 +155,7 @@ const tasksByKey = computed(() => {
   return groups
 })
 
-const selectedLabel = computed(() => {
-  const date = rangeDays.value.find(day => keyOf(day) === selectedKey.value)
-  return date ? new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date) : ''
-})
-const selectedTasks = computed(() => selectedKey.value ? (tasksByKey.value[selectedKey.value] || []) : [])
-
-const formatStart = time => time ? new Date(time).toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : ''
-
+const openDay = day => router.push(`/home/day/${day.key}`)
 const fetchRange = async (seq, days) => {
   if (disposed || seq !== requestSequence) return
   const from = days[0].toISOString()
@@ -209,9 +184,6 @@ const scheduleFetch = () => {
   tasks.value = []
   tasksLoading.value = true
   tasksError.value = false
-  if (selectedKey.value && !days.some(day => keyOf(day) === selectedKey.value)) {
-    selectedKey.value = null
-  }
   fetchTimer = window.setTimeout(() => {
     fetchTimer = null
     fetchRange(seq, days)
@@ -225,14 +197,7 @@ const go = direction => {
 const goToday = () => {
   today.value = startOfDay(new Date())
   cursor.value = today.value
-  select({ key: todayKey.value })
 }
-
-const select = day => {
-  selectedKey.value = day.key
-}
-
-const openTask = taskId => router.push(`/home/todo/${taskId}`)
 
 watch(rangeDays, scheduleFetch, { immediate: true, flush: 'sync' })
 onBeforeUnmount(() => {
@@ -264,7 +229,6 @@ onBeforeUnmount(() => {
 .day-cell:hover { background: var(--app-bg, #f7f8fa); }
 .day-cell.outside { color: var(--app-muted, #697586); opacity: 0.55; }
 .day-cell.today .day-number { color: var(--el-color-primary); font-weight: 700; }
-.day-cell.selected { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
 .day-number { font-size: 14px; min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
 .day-cell.today .day-number { border: 1px solid var(--el-color-primary); }
 .day-badge { align-self: flex-start; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
@@ -274,7 +238,6 @@ onBeforeUnmount(() => {
 .week-day:hover { background: var(--app-bg, #f7f8fa); }
 .week-day:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 .week-day.today { border-color: var(--el-color-primary); }
-.week-day.selected { background: var(--el-color-primary-light-9); }
 .week-day-header { width: 100%; border: 0; background: transparent; padding: 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; color: inherit; }
 .week-day-name { font-size: 12px; color: var(--app-muted, #697586); }
 .week-day-number { font-size: 15px; font-weight: 600; min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
@@ -283,15 +246,6 @@ onBeforeUnmount(() => {
 .week-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .week-task-item { font-size: 12px; line-height: 1.4; padding: 4px 6px; border-radius: 6px; background: var(--app-bg, #f7f8fa); color: #243047; overflow-wrap: anywhere; }
 .week-task-item.done { color: var(--app-muted, #697586); text-decoration: line-through; }
-.day-panel { margin-top: 16px; background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 20px; }
-.day-panel-title { margin: 0 0 10px; font-size: 16px; font-weight: 600; }
-.day-panel-empty { margin: 0; color: var(--app-muted, #697586); font-size: 14px; }
-.panel-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.panel-task-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: transparent; cursor: pointer; color: #243047; font-size: 14px; text-align: left; }
-.panel-task-item:hover { border-color: var(--el-color-primary); }
-.panel-task-item.done .panel-task-name { color: var(--app-muted, #697586); text-decoration: line-through; }
-.panel-task-name { min-width: 0; overflow-wrap: anywhere; }
-.panel-task-time { flex: none; color: var(--app-muted, #697586); font-size: 12px; }
 @media (max-width: 760px) {
   .calendar-body { padding: 10px; }
   .day-cell { min-height: 48px; padding: 6px 2px; align-items: center; border-radius: 8px; }
