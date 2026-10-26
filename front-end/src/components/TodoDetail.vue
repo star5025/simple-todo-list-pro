@@ -287,9 +287,9 @@ const completeTodo = async () => {
   }
   try {
     await ElMessageBox.confirm(
-      t('todoList.confirmComplete', [todo.value.taskName]),
+      t('todoList.completeConfirmShort', [todo.value.taskName]),
       t('todoList.completeConfirmation'),
-      { confirmButtonText: t('todoList.markAsComplete'), cancelButtonText: t('todoList.cancel'), type: 'warning' }
+      { confirmButtonText: t('todoList.confirmAction'), cancelButtonText: t('todoList.cancel') }
     )
   } catch {
     return
@@ -317,9 +317,9 @@ const confirmDeleteTodo = async () => {
   if (actionBusy.value || !todo.value) return
   try {
     await ElMessageBox.confirm(
-      t('todoList.confirmDelete', [todo.value.taskName]),
+      t('todoList.deleteConfirmShort', [todo.value.taskName]),
       t('todoList.deleteConfirmation'),
-      { confirmButtonText: t('todoList.delete'), confirmButtonClass: 'el-button--danger', cancelButtonText: t('todoList.cancel'), type: 'warning' }
+      { confirmButtonText: t('todoList.confirmAction'), confirmButtonClass: 'el-button--danger', cancelButtonText: t('todoList.cancel') }
     )
   } catch {
     return

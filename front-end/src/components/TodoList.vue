@@ -581,12 +581,11 @@ const updateTodoStatus = async (todo, newStatus) => {
 
     // 待办事项从未完成标记为完成的情况
     await ElMessageBox.confirm(
-      t('todoList.confirmComplete', [todo.taskName]),
+      t('todoList.completeConfirmShort', [todo.taskName]),
       t('todoList.completeConfirmation'),
       {
-        confirmButtonText: t('todoList.markAsComplete'),
+        confirmButtonText: t('todoList.confirmAction'),
         cancelButtonText: t('todoList.cancel'),
-        type: 'warning',
       }
     );
     
@@ -687,13 +686,12 @@ const goToDetail = (taskId) => {
 // 确认删除
 const confirmDelete = (todo) => {
   ElMessageBox.confirm(
-    t('todoList.confirmDelete', [todo.taskName]),
+    t('todoList.deleteConfirmShort', [todo.taskName]),
     t('todoList.deleteConfirmation'),
     {
-      confirmButtonText: t('todoList.delete'),
+      confirmButtonText: t('todoList.confirmAction'),
       confirmButtonClass: 'el-button--danger',
       cancelButtonText: t('todoList.cancel'),
-      type: 'warning',
     }
   ).then(() => {
     deleteTodo(todo)
@@ -710,13 +708,12 @@ const confirmBatchDelete = () => {
   }
 
   ElMessageBox.confirm(
-    t('todoList.confirmBatchDelete', [selectedTodoIds.value.length]),
+    t('todoList.batchDeleteConfirmShort', [selectedTodoIds.value.length]),
     t('todoList.batchDeleteConfirmation'),
     {
-      confirmButtonText: t('todoList.batchDelete'),
+      confirmButtonText: t('todoList.confirmAction'),
       confirmButtonClass: 'el-button--danger',
       cancelButtonText: t('todoList.cancel'),
-      type: 'warning',
     }
   ).then(() => {
     batchDeleteTodos()
