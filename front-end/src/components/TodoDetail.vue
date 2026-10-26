@@ -10,6 +10,26 @@
             </el-button>
             <div class="header-title">{{ isEditing ? t('todoDetail.editTodo') : t('todoDetail.todoDetails') }}</div>
             <div class="header-actions">
+              <el-button
+                v-if="!isEditing"
+                class="favourite-action"
+                :class="{ favourited: todo.favourite }"
+                :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
+                :aria-pressed="!!todo.favourite"
+                :disabled="actionBusy"
+                @click="toggleFavourite"
+              >
+                <el-icon><StarFilled v-if="todo.favourite" /><Star v-else /></el-icon>
+              </el-button>
+              <el-button
+                v-if="!isEditing"
+                type="primary"
+                link
+                :disabled="actionBusy || todo.status"
+                @click="completeTodo"
+              >
+                {{ todo.status ? t('todoList.completed') : t('todoList.markAsComplete') }}
+              </el-button>
               <el-button 
                 v-if="!isEditing" 
                 @click="startEdit" 
@@ -25,6 +45,15 @@
                 link
               >
                 {{ t('todoDetail.save') }}
+              </el-button>
+              <el-button
+                v-if="!isEditing"
+                type="danger"
+                link
+                :disabled="actionBusy"
+                @click="confirmDeleteTodo"
+              >
+                {{ t('todoList.delete') }}
               </el-button>
             </div>
           </div>
@@ -189,9 +218,9 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { ArrowLeft, Loading } from '@element-plus/icons-vue'
+import { ArrowLeft, Loading, Star, StarFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -210,7 +239,98 @@ const scheduleLoading = ref(false)
 const scheduleSaving = ref(false)
 const scheduleError = ref('')
 const taskId = route.params.id
+const actionBusy = ref(false)
 let disposed = false
+
+const notifyFavouriteChanged = () => {
+  window.dispatchEvent(new CustomEvent('favouriteChanged'))
+}
+
+// 详情页直接收藏/取消收藏：只提交 favourite 字段，避免旧快照覆盖其他字段
+const toggleFavourite = async () => {
+  if (actionBusy.value || !todo.value) return
+  actionBusy.value = true
+  const next = !todo.value.favourite
+  try {
+    const response = await request.patch(`/task/${taskId}`, { favourite: next })
+    if (disposed) return
+    if (response.code === 1) {
+      todo.value.favourite = next
+      notifyFavouriteChanged()
+      ElMessage.success(t(next ? 'todoList.addedToFavorites' : 'todoList.removedFromFavorites'))
+    } else {
+      ElMessage.error(response.msg || t('todoList.favoriteOperationFailed'))
+    }
+  } catch (error) {
+    if (!disposed) ElMessage.error(t('todoList.favoriteOperationFailed'))
+  } finally {
+    if (!disposed) actionBusy.value = false
+  }
+}
+
+// 标记完成：与列表一致需要二次确认，完成后刷新详情以反映服务端状态
+const completeTodo = async () => {
+  if (actionBusy.value || !todo.value) return
+  if (todo.value.status) {
+    ElMessage.warning(t('todoList.cannotUncomplete'))
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      t('todoList.confirmComplete', [todo.value.taskName]),
+      t('todoList.completeConfirmation'),
+      { confirmButtonText: t('todoList.markAsComplete'), cancelButtonText: t('todoList.cancel'), type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  actionBusy.value = true
+  try {
+    const response = await request.patch(`/task/${taskId}`, { status: true })
+    if (disposed) return
+    if (response.code === 1) {
+      todo.value.status = true
+      notifyFavouriteChanged()
+      ElMessage.success(t('todoList.taskCompleted'))
+      fetchTodoDetail()
+    } else {
+      ElMessage.error(response.msg || t('todoList.statusUpdateFailed'))
+    }
+  } catch (error) {
+    if (!disposed) ElMessage.error(t('todoList.statusUpdateFailed'))
+  } finally {
+    if (!disposed) actionBusy.value = false
+  }
+}
+
+const confirmDeleteTodo = async () => {
+  if (actionBusy.value || !todo.value) return
+  try {
+    await ElMessageBox.confirm(
+      t('todoList.confirmDelete', [todo.value.taskName]),
+      t('todoList.deleteConfirmation'),
+      { confirmButtonText: t('todoList.delete'), confirmButtonClass: 'el-button--danger', cancelButtonText: t('todoList.cancel'), type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  actionBusy.value = true
+  try {
+    const response = await request.delete(`/task/${taskId}`)
+    if (disposed) return
+    if (response.code === 1) {
+      notifyFavouriteChanged()
+      ElMessage.success(t('todoList.deleteSuccess'))
+      router.push('/home/list')
+    } else {
+      ElMessage.error(response.msg || t('todoList.deleteFailed'))
+    }
+  } catch (error) {
+    if (!disposed) ElMessage.error(t('todoList.deleteFailed'))
+  } finally {
+    if (!disposed) actionBusy.value = false
+  }
+}
 
 const fetchSchedule = async () => {
   if (!taskId || disposed || scheduleLoading.value || scheduleSaving.value) return
@@ -437,6 +557,27 @@ onBeforeUnmount(() => {
 
 .todo-status {
   margin-bottom: 16px;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.favourite-action {
+  min-width: 36px;
+  padding: 0 8px;
+  color: var(--app-muted, #697586);
+}
+
+.favourite-action.favourited {
+  color: var(--el-color-primary);
 }
 
 .todo-title {
