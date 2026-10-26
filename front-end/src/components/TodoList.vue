@@ -466,6 +466,7 @@ const firstListLoad = ref(true)
 watch(filterParams, () => {
   currentPage.value = 1
   selectedTodoIds.value = []
+  scrollToListTop()
   if (listActive) fetchTodos()
 }, { deep: true })
 
@@ -597,17 +598,25 @@ const getCountdownTagType = (todo) => {
   }
 }
 
+// 进入新的分页时回到内容区顶部；使用瞬时滚动，避免平滑动画。
+const scrollToListTop = () => {
+  const container = document.querySelector('.content-main')
+  if (container) container.scrollTo({ top: 0, behavior: 'auto' })
+}
+
 // 分页相关方法
 const handleSizeChange = val => {
   pageSize.value = val
   currentPage.value = 1
   selectedTodoIds.value = []
+  scrollToListTop()
   fetchTodos()
 }
 
 const handleCurrentChange = val => {
   currentPage.value = val
   selectedTodoIds.value = []
+  scrollToListTop()
   fetchTodos()
 }
 

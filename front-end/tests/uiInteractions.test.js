@@ -14,7 +14,7 @@ function listHarness(get) {
   const source = fs.readFileSync(new URL('../src/components/TodoList.vue', import.meta.url), 'utf8')
     .match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .* from .*$/gm, '')
   const filters = ref({ status: false, orderBy: 'dueTime', page: 1, pageSize: 10 })
-  const activated = [], deactivated = [], unmounted = [], watches = [], patches = []
+  const activated = [], deactivated = [], unmounted = [], watches = [], patches = [], scrolls = []
   const sandbox = {
     ref, computed, nextTick,
     watch: (...args) => { const stop = watch(...args); watches.push(stop); return stop },
@@ -29,11 +29,11 @@ function listHarness(get) {
     ElMessage: { success() {}, error() {}, warning() {} },
     ElMessageBox: { confirm: async () => {} },
     window: { setTimeout: () => 1, dispatchEvent() {} },
-    document: { addEventListener() {}, removeEventListener() {} },
+    document: { addEventListener() {}, removeEventListener() {}, querySelector: () => ({ scrollTo: ({ top }) => scrolls.push(top) }) },
     CustomEvent: class {}, console: { log() {}, error() {} }
   }
-  vm.runInNewContext(source + '\nglobalThis.api = { fetchTodos, todos, total, currentPage, pageSize, toggleFavourite, handleCurrentChange }', sandbox)
-  return { ...sandbox.api, filters, patches,
+  vm.runInNewContext(source + '\nglobalThis.api = { fetchTodos, todos, total, currentPage, pageSize, toggleFavourite, handleCurrentChange, handleSizeChange }', sandbox)
+  return { ...sandbox.api, filters, patches, scrolls,
     activate: () => activated.forEach(cb => cb()),
     deactivate: () => deactivated.forEach(cb => cb()),
     close: () => { deactivated.forEach(cb => cb()); unmounted.forEach(cb => cb()); watches.forEach(stop => stop()) } }
@@ -90,6 +90,17 @@ test('favourite patches only its field and ignores repeated in-flight clicks', a
     assert.equal(page.patches.length, 1)
     assert.deepEqual(JSON.parse(JSON.stringify(page.patches[0])), { favourite: true })
     assert.equal(todo.favourite, true)
+  } finally { page.close() }
+})
+
+test('changing page or page size scrolls the content area back to the top', async () => {
+  const page = listHarness(async () => result('task'))
+  try {
+    page.activate(); await nextTick()
+    page.handleCurrentChange(2); await nextTick()
+    page.handleSizeChange(20); await nextTick()
+    assert.deepEqual(page.scrolls, [0, 0])
+    assert.equal(page.currentPage.value, 1)
   } finally { page.close() }
 })
 
