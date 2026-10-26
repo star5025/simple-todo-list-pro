@@ -629,6 +629,7 @@ onBeforeUnmount(() => {
 }
 
 .complete-box .box {
+  position: relative;
   width: 18px;
   height: 18px;
   box-sizing: border-box;
@@ -647,16 +648,29 @@ onBeforeUnmount(() => {
   height: 12px;
   fill: none;
   stroke: #fff;
-  stroke-width: 3.4;
+  stroke-width: 3.8;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 26;
   stroke-dashoffset: 26;
-  animation: check-draw .32s .04s ease-out forwards;
+  animation: check-draw .4s .08s cubic-bezier(.4, 0, .2, 1) forwards;
 }
 
 .complete-box.done .box {
-  animation: box-pop .32s ease-out;
+  border-color: var(--el-color-success);
+  background: var(--el-color-success);
+  animation: box-pop .46s cubic-bezier(.2, .9, .25, 1.35);
+}
+
+/* 完成后向外扩散的光环，强化完成感 */
+.complete-box.done .box::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--el-color-success);
+  border-radius: 5px;
+  pointer-events: none;
+  animation: box-ring .52s ease-out forwards;
 }
 
 @keyframes check-draw {
@@ -664,19 +678,19 @@ onBeforeUnmount(() => {
 }
 
 @keyframes box-pop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.14); }
+  0% { transform: scale(.8); }
+  40% { transform: scale(1.3); }
+  68% { transform: scale(.95); }
   100% { transform: scale(1); }
+}
+
+@keyframes box-ring {
+  0% { opacity: .85; transform: scale(.9); }
+  100% { opacity: 0; transform: scale(2.05); }
 }
 
 .complete-box:hover:not(:disabled) .box {
   border-color: var(--el-color-primary);
-}
-
-.complete-box.done .box {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary);
-  color: #fff;
 }
 
 .complete-box:disabled {
