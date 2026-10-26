@@ -121,19 +121,21 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 .dialog-fade-enter-active, .dialog-fade-leave-active { animation-duration: .18s; }
 .dialog-fade-enter-active .el-overlay-dialog, .dialog-fade-leave-active .el-overlay-dialog,
 .fade-in-linear-enter-active .el-overlay-message-box, .fade-in-linear-leave-active .el-overlay-message-box { animation: none; }
-.dialog-fade-enter-active .el-dialog, .fade-in-linear-enter-active .el-message-box { animation: surface-in .18s ease-out; }
 .dialog-fade-leave-active .el-dialog, .fade-in-linear-leave-active .el-message-box { animation: surface-out .12s ease-in; }
 
-/* 确认弹窗果冻弹跳：进入时轻微压扁回弹 */
-.fade-in-linear-enter-active .el-message-box {
-  animation: jelly-in .42s cubic-bezier(.22, 1.1, .36, 1);
+/* 居中弹窗出现动画：元素创建即播放，避免依赖外层过渡类被提前移除。
+   消息确认框与对话框共用同一套弹性放大效果。 */
+.el-message-box,
+.el-dialog {
+  animation: pop-in .46s cubic-bezier(.2, .9, .25, 1.25);
+  transform-origin: center center;
 }
 
-@keyframes jelly-in {
-  0% { opacity: 0; transform: scale(.86, .92); }
-  45% { opacity: 1; transform: scale(1.045, 1.06); }
-  68% { transform: scale(.982, .988); }
-  84% { transform: scale(1.012, 1.008); }
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(.72); }
+  55% { opacity: 1; transform: scale(1.06, .97); }
+  74% { transform: scale(.975, 1.02); }
+  88% { transform: scale(1.012, .995); }
   100% { opacity: 1; transform: scale(1); }
 }
 @keyframes surface-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }

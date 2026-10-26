@@ -48,7 +48,7 @@
     </div>
   
   <!-- 修改用户名对话框 -->
-  <el-dialog v-model="usernameDialogVisible" :title="t('userInfo.editUsernameTitle')" width="min(440px, calc(100vw - 32px))">
+  <el-dialog v-model="usernameDialogVisible" destroy-on-close :title="t('userInfo.editUsernameTitle')" width="min(440px, calc(100vw - 32px))">
     <el-form id="username-form" class="user-dialog-form" :model="usernameForm" ref="usernameFormRef" label-position="top" @submit.prevent="updateUsername">
       <el-form-item :label="t('userInfo.newUsername')" for="profile-username">
         <el-input id="profile-username" name="username" v-model="usernameForm.newUsername" autocomplete="username" ref="usernameInput" />
@@ -63,7 +63,7 @@
   </el-dialog>
   
   <!-- 修改密码对话框 -->
-  <el-dialog v-model="passwordDialogVisible" :title="t('userInfo.changePasswordTitle')" width="min(440px, calc(100vw - 32px))">
+  <el-dialog v-model="passwordDialogVisible" destroy-on-close :title="t('userInfo.changePasswordTitle')" width="min(440px, calc(100vw - 32px))">
     <el-form id="password-form" class="user-dialog-form" :model="passwordForm" ref="passwordFormRef" label-position="top" @submit.prevent="updatePassword">
       <el-form-item :label="t('userInfo.oldPassword')" for="profile-old-password">
         <el-input id="profile-old-password" name="current-password" v-model="passwordForm.oldPassword" type="password" show-password autocomplete="current-password" ref="oldPasswordInput" />
