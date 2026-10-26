@@ -915,6 +915,20 @@ onUnmounted(() => {
   animation: list-box-pop .45s cubic-bezier(.2, .9, .25, 1.25);
 }
 
+/* 已完成状态长期保持绿色，不随完成动画结束回落到默认蓝色 */
+.todo-checkbox.is-checked :deep(.el-checkbox__inner) {
+  background-color: var(--el-color-success);
+  border-color: var(--el-color-success);
+}
+
+.todo-checkbox.is-checked :deep(.el-checkbox__inner::after) {
+  border-color: #fff;
+}
+
+.todo-checkbox.is-checked :deep(.el-checkbox__label) {
+  color: var(--el-text-color-regular);
+}
+
 .todo-checkbox.just-completed :deep(.el-checkbox__inner::before) {
   content: '';
   position: absolute;
