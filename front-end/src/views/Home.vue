@@ -11,10 +11,12 @@
       <el-main class="main-content" :class="{ 'locale-fade': localeSwitching }">
         <!-- 主页内容区域 -->
         <div class="home-content">
-          <router-view v-slot="{ Component }">
-            <keep-alive include="TodoList">
-              <component :is="Component" :key="$route.fullPath" v-if="Component" />
-            </keep-alive>
+          <router-view v-slot="{ Component, route: current }">
+            <transition :name="innerTransition" mode="out-in">
+              <keep-alive include="TodoList">
+                <component :is="Component" :key="current.fullPath" v-if="Component" />
+              </keep-alive>
+            </transition>
           </router-view>
         </div>
       </el-main>
@@ -45,7 +47,13 @@ const router = useRouter()
 const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 760px)')
 const navigationOpen = ref(false)
-watch(() => route.fullPath, () => { navigationOpen.value = false })
+// 仅日历 ↔ 当日页面之间使用淡入过渡；其余子页面切换保持无过渡，避免整页闪动。
+const isDayPath = path => path === '/home/calendar' || path.startsWith('/home/day/')
+const innerTransition = ref('')
+watch(() => route.fullPath, (to, from) => {
+  innerTransition.value = from && to !== from && isDayPath(from) && isDayPath(to) ? 'day-fade' : ''
+  navigationOpen.value = false
+})
 watch(isMobile, () => { navigationOpen.value = false })
 const { t, locale } = useI18n()
 
@@ -144,6 +152,9 @@ onBeforeUnmount(() => {
 /* 语言切换内容区淡入上浮过渡 */
 .locale-fade { animation: locale-fade 0.26s ease; }
 @keyframes locale-fade { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
+/* 日历与当日页面之间：纯淡入 + 极轻微缩放，不产生位移与额外滚动空间 */
+.day-fade-enter-active, .day-fade-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.day-fade-enter-from, .day-fade-leave-to { opacity: 0; transform: scale(.995); }
 @media (max-width: 1000px) { .main-content { padding: 24px; } }
 @media (max-width: 760px) { .main-content { padding: 16px 12px 24px; } }
 </style>

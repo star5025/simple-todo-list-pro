@@ -13,7 +13,8 @@ const elementLocale = computed(() => locale.value === 'zh-CN' ? zhCN : enUS)
 const route = useRoute()
 const hasError = ref(false)
 
-// 登录/注册之间保留克制的淡入过渡；其他页面切换不使用过渡，避免整页闪烁。
+// 仅登录/注册之间使用克制的淡入过渡；其他页面切换不使用过渡，避免整页闪烁。
+// Home 内部的日历↔当日页过渡由 Home.vue 的内层路由处理（外层 key 相同，不会触发）。
 const isAuthPath = path => path.startsWith('/login') || path.startsWith('/register')
 const pageTransition = ref('')
 watch(() => route.fullPath, (to, from) => {
@@ -113,4 +114,5 @@ const reloadPage = () => {
 .auth-fade-leave-to {
   opacity: 0;
 }
+
 </style>
