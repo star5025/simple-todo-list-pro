@@ -104,6 +104,25 @@ test('changing page or page size scrolls the content area back to the top', asyn
   } finally { page.close() }
 })
 
+test('re-clicking an active filter cancels it', async () => {
+  const calls = []
+  const page = listHarness(async (url, params) => { calls.push(params); return result('task') })
+  try {
+    page.activate(); await nextTick()
+    page.setTimeFilter('dueTime'); await nextTick()
+    assert.equal(calls.at(-1).orderBy, 'dueTimeDesc')
+    page.setTimeFilter('dueTime'); await nextTick()
+    assert.equal(calls.at(-1).orderBy, undefined, 'third click clears sorting')
+    assert.equal(page.timeFilter.value.field, null)
+
+    page.setStatusFilter(true); await nextTick()
+    assert.equal(calls.at(-1).status, true)
+    page.setStatusFilter(true); await nextTick()
+    assert.equal(calls.at(-1).status, undefined, 're-click clears status filter')
+    assert.equal(page.statusFilter.value, null)
+  } finally { page.close() }
+})
+
 test('home marks acknowledged reminders and removes invalidated ones via the close contract', async () => {
   const source = fs.readFileSync(new URL('../src/views/Home.vue', import.meta.url), 'utf8')
     .match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .* from .*$/gm, '')

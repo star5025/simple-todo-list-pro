@@ -313,17 +313,21 @@ const applyFilters = () => {
   if (listActive) fetchTodos()
 }
 
-// 点击同一字段切换升/降序，不取消排序
+// 点击同一字段：升序 → 降序 → 取消排序
 const setTimeFilter = field => {
-  timeFilter.value = {
-    field,
-    order: timeFilter.value.field === field && timeFilter.value.order === 'asc' ? 'desc' : 'asc'
+  if (timeFilter.value.field !== field) {
+    timeFilter.value = { field, order: 'asc' }
+  } else if (timeFilter.value.order === 'asc') {
+    timeFilter.value = { field, order: 'desc' }
+  } else {
+    timeFilter.value = { field: null, order: null }
   }
   applyFilters()
 }
 
+// 再次点击当前状态则取消该筛选（回到全部）
 const setStatusFilter = status => {
-  statusFilter.value = status
+  statusFilter.value = status !== null && statusFilter.value === status ? null : status
   applyFilters()
 }
 
