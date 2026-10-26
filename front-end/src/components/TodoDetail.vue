@@ -63,12 +63,16 @@
             <div v-if="!isEditing" class="title-row">
               <button
                 type="button"
-                class="icon-action complete-icon"
+                class="complete-box"
+                :class="{ done: todo.status }"
                 :aria-label="todo.status ? t('todoList.completed') : t('todoList.markAsComplete')"
+                :aria-pressed="!!todo.status"
                 :disabled="actionBusy || todo.status"
                 @click="completeTodo"
               >
-                <el-icon aria-hidden="true"><CircleCheckFilled v-if="todo.status" /><CircleCheck v-else /></el-icon>
+                <span class="box" aria-hidden="true">
+                  <el-icon v-if="todo.status"><Check /></el-icon>
+                </span>
               </button>
               <h2 class="todo-title">{{ todo.taskName }}</h2>
             </div>
@@ -224,7 +228,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { ArrowLeft, CircleCheck, CircleCheckFilled, Delete, Loading, Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Check, Delete, Loading, Star, StarFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -607,16 +611,46 @@ onBeforeUnmount(() => {
   color: var(--el-color-primary);
 }
 
-.complete-icon {
+/* 与列表一致的方形勾选框：空白格 → 完成后填充主题蓝并显示白色对勾 */
+.complete-box {
   width: 32px;
   height: 32px;
-  color: var(--el-color-primary);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
+  cursor: pointer;
+  color: #fff;
 }
 
-.complete-icon:disabled {
-  opacity: 1;
-  color: var(--el-color-success);
+.complete-box .box {
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--app-muted, #697586);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+
+.complete-box:hover:not(:disabled) .box {
+  border-color: var(--el-color-primary);
+}
+
+.complete-box.done .box {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary);
+  color: #fff;
+}
+
+.complete-box:disabled {
+  cursor: default;
 }
 
 .delete-icon:hover:not(:disabled) {
