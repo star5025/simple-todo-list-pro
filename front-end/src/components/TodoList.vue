@@ -73,6 +73,7 @@
                   @change="(val) => updateTodoStatus(todo, val)"
                   @click.stop
                   class="todo-checkbox"
+                  :class="{ 'just-completed': justCompletedId === todo.taskId }"
                 />
                 <span v-else class="selection-indicator" aria-hidden="true">
                   <el-icon v-if="selectedTodoIds.includes(todo.taskId)"><Check /></el-icon>
@@ -541,6 +542,8 @@ const updateTodoStatus = async (todo, newStatus) => {
     if (response.code === 1) {
       // 更新本地状态
       todo.status = newStatus
+      if (newStatus) playCompletedFeedback(todo.taskId)
+      window.dispatchEvent(new CustomEvent('favouriteChanged'))
       ElMessage.success(t('todoList.taskCompleted'))
     } else {
       // 恢复状态
@@ -722,6 +725,15 @@ const batchDeleteTodos = async () => {
 
 // 同一任务的交互在请求期间只允许一次，避免快速连点刷屏
 const pendingTaskActions = new Set()
+// 完成动效由响应式状态驱动，避免手动增删 class 被 Vue 重渲染覆盖
+const justCompletedId = ref(null)
+let completedFeedbackTimer = null
+const playCompletedFeedback = taskId => {
+  justCompletedId.value = null
+  window.clearTimeout(completedFeedbackTimer)
+  window.requestAnimationFrame(() => { justCompletedId.value = taskId })
+  completedFeedbackTimer = window.setTimeout(() => { justCompletedId.value = null }, 700)
+}
 const releaseTaskAction = key => { window.setTimeout(() => pendingTaskActions.delete(key), 300) }
 // 星标动画由响应式 class 控制，避免状态更新重写 class 打断动画
 const poppingTaskId = ref(null)
@@ -890,6 +902,39 @@ onUnmounted(() => {
 
 .todo-checkbox {
   margin-right: 0;
+}
+
+/* 列表勾选框的完成反馈：绿色弹跳 + 扩散光环，与详情页一致 */
+.todo-checkbox :deep(.el-checkbox__inner) {
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.todo-checkbox.just-completed :deep(.el-checkbox__inner) {
+  background: var(--el-color-success);
+  border-color: var(--el-color-success);
+  animation: list-box-pop .6s cubic-bezier(.2, .9, .25, 1.35);
+}
+
+.todo-checkbox.just-completed :deep(.el-checkbox__inner::before) {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 3px solid var(--el-color-success);
+  border-radius: 6px;
+  animation: list-box-ring .65s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes list-box-pop {
+  0% { transform: scale(.6); }
+  45% { transform: scale(1.75); }
+  70% { transform: scale(.92); }
+  100% { transform: scale(1); }
+}
+
+@keyframes list-box-ring {
+  0% { opacity: .95; transform: scale(.85); }
+  100% { opacity: 0; transform: scale(2.8); }
 }
 
 .selection-indicator {
