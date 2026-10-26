@@ -66,21 +66,6 @@ watch(locale, () => {
   localeTimer = window.setTimeout(() => { localeSwitching.value = false }, 280)
 })
 
-// 创建筛选条件响应式引用，设置默认筛选条件
-const filterParams = ref({
-  status: false,    // 默认只显示未完成的待办事项
-  orderBy: 'dueTime' // 默认按截止时间排序
-})
-
-// 创建更新筛选条件的方法
-const updateFilter = (params) => {
-  filterParams.value = {...filterParams.value, ...params}
-}
-
-// 提供筛选条件和更新方法给子组件
-provide('filterParams', filterParams)
-provide('updateFilter', updateFilter)
-
 const sessionToken = localStorage.getItem('token')
 let remindersActive = true
 const reminders = ref([])

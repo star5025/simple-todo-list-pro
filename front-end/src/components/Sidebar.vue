@@ -66,126 +66,15 @@
         </div>
       </el-card>
       
-      <!-- 筛选区域：仅在待办列表页有意义 -->
-      <el-card v-if="isListPage" class="filter-card" shadow="never">
-        <template #header>
-          <div class="filter-header">
-            <el-icon><Filter /></el-icon>
-            <span>{{ t('sidebar.filters') }}</span>
-          </div>
-        </template>
-        
-        <div class="filter-content">
-          <!-- 时间排序筛选 -->
-          <div class="filter-group">
-            <el-text class="filter-group-label" size="small">{{ t('sidebar.sortBy') }}</el-text>
-            <div class="filter-buttons">
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  timeFilter.field === 'dueTime' ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="timeFilter.field === 'dueTime'"
-                @click="setTimeFilter('dueTime')"
-              >
-                {{ t('sidebar.dueTime') }}
-                <el-icon v-if="timeFilter.field === 'dueTime'">
-                  <ArrowUp v-if="timeFilter.order === 'asc' && timeFilter.field === 'dueTime'" />
-                  <ArrowDown v-else-if="timeFilter.order === 'desc' && timeFilter.field === 'dueTime'" />
-                </el-icon>
-              </button>
-              
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  timeFilter.field === 'createdTime' ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="timeFilter.field === 'createdTime'"
-                @click="setTimeFilter('createdTime')"
-              >
-                {{ t('sidebar.createdTime') }}
-                <el-icon v-if="timeFilter.field === 'createdTime'">
-                  <ArrowUp v-if="timeFilter.order === 'asc' && timeFilter.field === 'createdTime'" />
-                  <ArrowDown v-else-if="timeFilter.order === 'desc' && timeFilter.field === 'createdTime'" />
-                </el-icon>
-              </button>
-              
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  timeFilter.field === 'startTime' ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="timeFilter.field === 'startTime'"
-                @click="setTimeFilter('startTime')"
-              >
-                {{ t('sidebar.startTime') }}
-                <el-icon v-if="timeFilter.field === 'startTime'">
-                  <ArrowUp v-if="timeFilter.order === 'asc' && timeFilter.field === 'startTime'" />
-                  <ArrowDown v-else-if="timeFilter.order === 'desc' && timeFilter.field === 'startTime'" />
-                </el-icon>
-              </button>
-            </div>
-          </div>
-          
-          <!-- 完成状态筛选 -->
-          <div class="filter-group">
-            <el-text class="filter-group-label" size="small">{{ t('sidebar.status') }}</el-text>
-            <div class="filter-buttons">
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  statusFilter === null ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="statusFilter === null"
-                @click="setStatusFilter(null)"
-              >
-                {{ t('sidebar.all') }}
-              </button>
-              
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  statusFilter === false ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="statusFilter === false"
-                @click="setStatusFilter(false)"
-              >
-                {{ t('sidebar.pending') }}
-              </button>
-              
-              <button 
-                :class="[
-                  'custom-button', 
-                  'custom-button--small',
-                  statusFilter === true ? 'custom-button--primary' : 'custom-button--default'
-                ]"
-                :aria-pressed="statusFilter === true"
-                @click="setStatusFilter(true)"
-              >
-                {{ t('sidebar.completed') }}
-              </button>
-            </div>
-          </div>
-          
-        </div>
-      </el-card>
     </div>
   </el-aside>
 </template>
 
 <script setup>
-import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { 
-  ArrowUp, 
-  ArrowDown, 
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import {
   Plus,
-  Filter,
   User,
   Star,
   List,
@@ -198,24 +87,7 @@ import request from '@/utils/request'
 
 const { t, locale } = useI18n()
 const router = useRouter()
-const route = useRoute()
-const isListPage = computed(() => route.path === '/home/list')
 const emit = defineEmits(['navigate'])
-const filterParams = inject('filterParams', ref({}))
-const initialOrder = filterParams.value.orderBy || ''
-
-// 注入更新筛选条件的方法
-const updateFilter = inject('updateFilter', null)
-
-// 时间筛选条件（单选）
-const timeFilter = ref({
-  field: initialOrder.replace(/Desc$/, '') || null,
-  order: initialOrder ? (initialOrder.endsWith('Desc') ? 'desc' : 'asc') : null
-})
-
-// 状态筛选
-const statusFilter = ref(filterParams.value.status ?? null) // null: 全部, false: 未完成, true: 已完成
-
 // 收藏待办相关
 const favouriteTodos = ref([])
 const loadingFavourites = ref(false)
@@ -228,65 +100,6 @@ const handleAddTodo = () => {
 const handleUserInfo = () => {
   router.push('/home/userinfo')
   emit('navigate')
-}
-
-// 设置时间筛选条件：点击同一字段在升序/降序间切换，不再取消排序
-const setTimeFilter = (field) => {
-  if (timeFilter.value.field === field) {
-    timeFilter.value.order = timeFilter.value.order === 'asc' ? 'desc' : 'asc'
-  } else {
-    timeFilter.value.field = field
-    timeFilter.value.order = 'asc'
-  }
-  
-  // 立即应用筛选条件
-  applyFilters()
-}
-
-// 设置状态筛选
-const setStatusFilter = (status) => {
-  statusFilter.value = status
-  
-  // 立即应用筛选条件
-  applyFilters()
-}
-
-// 应用筛选条件
-const applyFilters = () => {
-  // 仅在非列表页时跳转，避免重复导航造成列表闪动
-  if (router.currentRoute.value.path !== '/home/list') {
-    router.push('/home/list')
-    emit('navigate')
-  }
-  
-  // 构造发送给后端的参数
-  const params = {
-    page: 1,
-    pageSize: 10,
-    status: statusFilter.value
-  }
-  
-  // 根据时间字段和排序方向构造orderBy参数
-  if (timeFilter.value.field && timeFilter.value.order) {
-    const fieldMap = {
-      'dueTime': 'dueTime',
-      'createdTime': 'createdTime',
-      'startTime': 'startTime'
-    }
-    
-    const fieldName = fieldMap[timeFilter.value.field] || 'createdTime'
-    const orderSuffix = timeFilter.value.order === 'desc' ? 'Desc' : ''
-    params.orderBy = fieldName + orderSuffix
-  }
-  // 如果timeFilter.field或timeFilter.order为null，则不设置orderBy参数
-  
-  // 调用更新筛选条件的方法
-  if (updateFilter) {
-    updateFilter(params)
-  } else {
-    console.warn('updateFilter 方法未找到')
-  }
-  
 }
 
 // 获取收藏的待办事项

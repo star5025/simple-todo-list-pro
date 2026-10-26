@@ -13,12 +13,10 @@ function deferred() {
 function listHarness(get) {
   const source = fs.readFileSync(new URL('../src/components/TodoList.vue', import.meta.url), 'utf8')
     .match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .* from .*$/gm, '')
-  const filters = ref({ status: false, orderBy: 'dueTime', page: 1, pageSize: 10 })
   const activated = [], deactivated = [], unmounted = [], watches = [], patches = [], scrolls = []
   const sandbox = {
     ref, computed, nextTick,
     watch: (...args) => { const stop = watch(...args); watches.push(stop); return stop },
-    inject: () => filters,
     useI18n: () => ({ t: key => key, locale: ref('en-US') }),
     useRoute: () => ({ name: 'TodoList', fullPath: '/home/list' }),
     useRouter: () => ({ push() {} }),
@@ -32,8 +30,8 @@ function listHarness(get) {
     document: { addEventListener() {}, removeEventListener() {}, querySelector: () => ({ scrollTo: ({ top }) => scrolls.push(top) }) },
     CustomEvent: class {}, console: { log() {}, error() {} }
   }
-  vm.runInNewContext(source + '\nglobalThis.api = { fetchTodos, todos, total, currentPage, pageSize, toggleFavourite, handleCurrentChange, handleSizeChange }', sandbox)
-  return { ...sandbox.api, filters, patches, scrolls,
+  vm.runInNewContext(source + '\nglobalThis.api = { fetchTodos, todos, total, currentPage, pageSize, toggleFavourite, handleCurrentChange, handleSizeChange, setStatusFilter, setTimeFilter, statusFilter, timeFilter }', sandbox)
+  return { ...sandbox.api, patches, scrolls,
     activate: () => activated.forEach(cb => cb()),
     deactivate: () => deactivated.forEach(cb => cb()),
     close: () => { deactivated.forEach(cb => cb()); unmounted.forEach(cb => cb()); watches.forEach(stop => stop()) } }
@@ -46,9 +44,11 @@ test('list discards stale filter responses and fetches once on activation', asyn
   try {
     page.activate()
     assert.equal(calls.length, 1)
-    page.filters.value = { status: true, orderBy: 'dueTime' }
+    page.setStatusFilter(true)
     await nextTick()
     assert.equal(calls.length, 2)
+    assert.equal(calls[1].params.status, true)
+    assert.equal(calls[1].params.orderBy, 'dueTime')
     calls[1].response.resolve(result('new filter'))
     await nextTick(); await nextTick()
     calls[0].response.resolve(result('old filter'))

@@ -33,6 +33,45 @@
         </div>
       </template>
       
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">{{ t('sidebar.sortBy') }}</span>
+          <div class="filter-chips">
+            <button
+              v-for="field in sortFields"
+              :key="field"
+              type="button"
+              class="filter-chip"
+              :class="{ active: timeFilter.field === field }"
+              :aria-pressed="timeFilter.field === field"
+              @click="setTimeFilter(field)"
+            >
+              {{ t(`sidebar.${field}`) }}
+              <el-icon v-if="timeFilter.field === field" class="chip-arrow" aria-hidden="true">
+                <ArrowUp v-if="timeFilter.order === 'asc'" />
+                <ArrowDown v-else />
+              </el-icon>
+            </button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">{{ t('sidebar.status') }}</span>
+          <div class="filter-chips">
+            <button
+              v-for="option in statusOptions"
+              :key="String(option.value)"
+              type="button"
+              class="filter-chip"
+              :class="{ active: statusFilter === option.value }"
+              :aria-pressed="statusFilter === option.value"
+              @click="setStatusFilter(option.value)"
+            >
+              {{ t(`sidebar.${option.key}`) }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div v-if="loading" class="loading-container">
         <el-skeleton :rows="5" animated />
       </div>
@@ -223,11 +262,11 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, computed, onActivated, onDeactivated, onUnmounted } from 'vue'
+import { ref, watch, computed, onActivated, onDeactivated, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowDown, ArrowUp, Check, Delete, DeleteFilled, Star, StarFilled } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 import { toTaskDateOnly, parseTaskDate } from '@/utils/taskDates'
@@ -248,19 +287,45 @@ const compactMode = ref(false) // 简洁显示：平铺列表，仅保留完成/
 const batchMode = ref(false) // 控制是否处于批量删除模式
 const selectedTodoIds = ref([]) // 用于批量删除的选中项
 
-// 注入筛选条件
-const filterParams = inject('filterParams', ref({}))
+// 筛选状态：由待办列表面板自己维护
+const sortFields = ['dueTime', 'createdTime', 'startTime']
+const statusOptions = [
+  { key: 'all', value: null },
+  { key: 'pending', value: false },
+  { key: 'completed', value: true }
+]
+const timeFilter = ref({ field: 'dueTime', order: 'asc' })
+const statusFilter = ref(false)
 
-// 在组件初始化时，默认添加status=false的筛选条件，只显示未完成的待办事项
-const defaultFilterParams = computed(() => {
-  // 检查filterParams.value是否已定义
-  const params = filterParams.value || {};
-  
-  return {
-    status: false, // 默认只显示未完成的待办事项
-    ...params
+const queryParams = computed(() => {
+  const params = {}
+  if (statusFilter.value !== null) params.status = statusFilter.value
+  if (timeFilter.value.field && timeFilter.value.order) {
+    params.orderBy = timeFilter.value.field + (timeFilter.value.order === 'desc' ? 'Desc' : '')
   }
+  return params
 })
+
+const applyFilters = () => {
+  currentPage.value = 1
+  selectedTodoIds.value = []
+  scrollToListTop()
+  if (listActive) fetchTodos()
+}
+
+// 点击同一字段切换升/降序，不取消排序
+const setTimeFilter = field => {
+  timeFilter.value = {
+    field,
+    order: timeFilter.value.field === field && timeFilter.value.order === 'asc' ? 'desc' : 'asc'
+  }
+  applyFilters()
+}
+
+const setStatusFilter = status => {
+  statusFilter.value = status
+  applyFilters()
+}
 
 // 按指定时间字段分组的待办事项
 const groupedTodos = computed(() => {
@@ -269,16 +334,9 @@ const groupedTodos = computed(() => {
   // 确定用于分组的时间字段
   let groupByField = 'createdTime' // 默认按创建时间分组
   
-  // 根据当前筛选条件中的orderBy参数决定分组字段
-  if (filterParams.value && filterParams.value.orderBy) {
-    const orderBy = filterParams.value.orderBy
-    if (orderBy.startsWith('dueTime')) {
-      groupByField = 'dueTime'
-    } else if (orderBy.startsWith('startTime')) {
-      groupByField = 'startTime'
-    } else if (orderBy.startsWith('createdTime')) {
-      groupByField = 'createdTime'
-    }
+  // 根据当前排序字段决定分组字段
+  if (timeFilter.value.field) {
+    groupByField = timeFilter.value.field
   }
   
   todos.value.forEach(todo => {
@@ -464,12 +522,6 @@ const cancelBatchMode = () => {
 let requestSequence = 0
 let listActive = false
 const firstListLoad = ref(true)
-watch(filterParams, () => {
-  currentPage.value = 1
-  selectedTodoIds.value = []
-  scrollToListTop()
-  if (listActive) fetchTodos()
-}, { deep: true })
 
 onActivated(() => {
   listActive = true
@@ -486,7 +538,7 @@ onDeactivated(() => {
 const fetchTodos = async () => {
   const sequence = ++requestSequence
   if (firstListLoad.value) loading.value = true
-  const { page: ignoredPage, pageSize: ignoredSize, ...filters } = defaultFilterParams.value
+  const { page: ignoredPage, pageSize: ignoredSize, ...filters } = queryParams.value
   try {
     const response = await request.get('/task/pageQuery', {
       ...filters, page: currentPage.value, pageSize: pageSize.value
@@ -817,6 +869,86 @@ onUnmounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+/* 筛选条：从侧边栏移入待办列表面板 */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 0 0 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--app-border, #e7ebf0);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.filter-label {
+  color: var(--app-muted, #697586);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-muted, #697586);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.filter-chip:hover {
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary-light-5);
+}
+
+.filter-chip.active {
+  background: var(--el-color-primary-light-9);
+  border-color: transparent;
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+.chip-arrow {
+  font-size: 13px;
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .filter-bar {
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .filter-group {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-chip {
+    min-height: 36px;
+  }
 }
 
 .card-header,
