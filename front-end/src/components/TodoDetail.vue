@@ -10,26 +10,28 @@
             </el-button>
             <div class="header-title">{{ isEditing ? t('todoDetail.editTodo') : t('todoDetail.todoDetails') }}</div>
             <div class="header-actions">
-              <el-button
+              <button
                 v-if="!isEditing"
-                class="favourite-action"
+                type="button"
+                class="icon-action favourite-icon"
                 :class="{ favourited: todo.favourite }"
                 :aria-label="`${t('addTodo.favourite')}: ${todo.taskName}`"
                 :aria-pressed="!!todo.favourite"
                 :disabled="actionBusy"
                 @click="toggleFavourite"
               >
-                <el-icon><StarFilled v-if="todo.favourite" /><Star v-else /></el-icon>
-              </el-button>
-              <el-button
+                <el-icon aria-hidden="true"><StarFilled v-if="todo.favourite" /><Star v-else /></el-icon>
+              </button>
+              <button
                 v-if="!isEditing"
-                type="primary"
-                link
+                type="button"
+                class="icon-action complete-icon"
+                :aria-label="todo.status ? t('todoList.completed') : t('todoList.markAsComplete')"
                 :disabled="actionBusy || todo.status"
                 @click="completeTodo"
               >
-                {{ todo.status ? t('todoList.completed') : t('todoList.markAsComplete') }}
-              </el-button>
+                <el-icon aria-hidden="true"><CircleCheckFilled v-if="todo.status" /><CircleCheck v-else /></el-icon>
+              </button>
               <el-button 
                 v-if="!isEditing" 
                 @click="startEdit" 
@@ -46,15 +48,16 @@
               >
                 {{ t('todoDetail.save') }}
               </el-button>
-              <el-button
+              <button
                 v-if="!isEditing"
-                type="danger"
-                link
+                type="button"
+                class="icon-action delete-icon"
+                :aria-label="`${t('todoList.delete')}: ${todo.taskName}`"
                 :disabled="actionBusy"
                 @click="confirmDeleteTodo"
               >
-                {{ t('todoList.delete') }}
-              </el-button>
+                <el-icon aria-hidden="true"><Delete /></el-icon>
+              </button>
             </div>
           </div>
         </template>
@@ -220,7 +223,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
-import { ArrowLeft, Loading, Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, CircleCheck, CircleCheckFilled, Delete, Loading, Star, StarFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -570,14 +573,47 @@ onBeforeUnmount(() => {
   margin-left: 0;
 }
 
-.favourite-action {
-  min-width: 36px;
-  padding: 0 8px;
+/* 与待办列表项一致的图标按钮：36px 方形、无边框、悬停主色 */
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   color: var(--app-muted, #697586);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
 }
 
-.favourite-action.favourited {
+.icon-action:hover:not(:disabled) {
   color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.icon-action:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.favourite-icon.favourited {
+  color: var(--el-color-primary);
+}
+
+.complete-icon:disabled {
+  opacity: 1;
+  color: var(--el-color-success);
+}
+
+.delete-icon:hover:not(:disabled) {
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
 }
 
 .todo-title {
