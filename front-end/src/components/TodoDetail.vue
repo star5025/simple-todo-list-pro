@@ -25,12 +25,12 @@
               <button
                 v-if="!isEditing"
                 type="button"
-                class="icon-action complete-icon"
-                :aria-label="todo.status ? t('todoList.completed') : t('todoList.markAsComplete')"
-                :disabled="actionBusy || todo.status"
-                @click="completeTodo"
+                class="icon-action delete-icon"
+                :aria-label="`${t('todoList.delete')}: ${todo.taskName}`"
+                :disabled="actionBusy"
+                @click="confirmDeleteTodo"
               >
-                <el-icon aria-hidden="true"><CircleCheckFilled v-if="todo.status" /><CircleCheck v-else /></el-icon>
+                <el-icon aria-hidden="true"><Delete /></el-icon>
               </button>
               <el-button 
                 v-if="!isEditing" 
@@ -48,16 +48,6 @@
               >
                 {{ t('todoDetail.save') }}
               </el-button>
-              <button
-                v-if="!isEditing"
-                type="button"
-                class="icon-action delete-icon"
-                :aria-label="`${t('todoList.delete')}: ${todo.taskName}`"
-                :disabled="actionBusy"
-                @click="confirmDeleteTodo"
-              >
-                <el-icon aria-hidden="true"><Delete /></el-icon>
-              </button>
             </div>
           </div>
         </template>
@@ -70,7 +60,18 @@
               </el-tag>
             </div>
             
-            <h2 v-if="!isEditing" class="todo-title">{{ todo.taskName }}</h2>
+            <div v-if="!isEditing" class="title-row">
+              <button
+                type="button"
+                class="icon-action complete-icon"
+                :aria-label="todo.status ? t('todoList.completed') : t('todoList.markAsComplete')"
+                :disabled="actionBusy || todo.status"
+                @click="completeTodo"
+              >
+                <el-icon aria-hidden="true"><CircleCheckFilled v-if="todo.status" /><CircleCheck v-else /></el-icon>
+              </button>
+              <h2 class="todo-title">{{ todo.taskName }}</h2>
+            </div>
             <el-input 
               v-else
               v-model="editForm.taskName" 
@@ -606,6 +607,13 @@ onBeforeUnmount(() => {
   color: var(--el-color-primary);
 }
 
+.complete-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--el-color-primary);
+  flex: none;
+}
+
 .complete-icon:disabled {
   opacity: 1;
   color: var(--el-color-success);
@@ -617,12 +625,20 @@ onBeforeUnmount(() => {
 }
 
 .todo-title {
-  margin: 0 0 20px;
+  margin: 0;
   font-size: clamp(22px, 4vw, 28px);
   font-weight: 600;
   line-height: 1.4;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+/* 完成按钮位于标题左侧，与标题垂直居中对齐 */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .todo-title-input {
