@@ -620,8 +620,11 @@ onBeforeUnmount(() => {
   opacity: .55;
 }
 
-.favourite-icon.favourited {
-  color: var(--el-color-primary);
+/* 收藏星标固定为黄色，悬停保持黄色、不出现蓝色底 */
+.favourite-icon.favourited,
+.favourite-icon.favourited:hover:not(:disabled) {
+  color: var(--app-star, #f0b429);
+  background: transparent;
 }
 
 /* 与列表一致的方形勾选框：空白格 → 完成后填充主题蓝并显示白色对勾 */

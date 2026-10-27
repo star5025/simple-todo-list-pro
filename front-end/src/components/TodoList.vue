@@ -1139,11 +1139,16 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.icon-button:hover,
-.favourite-icon.favourited {
+.icon-button:hover {
   color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
 }
-.icon-button:hover { background: var(--el-color-primary-light-9); }
+/* 收藏星标固定为黄色，悬停不再变蓝 */
+.favourite-icon.favourited,
+.favourite-icon.favourited:hover {
+  color: var(--app-star, #f0b429);
+  background: transparent;
+}
 .delete-icon:hover { color: var(--el-color-danger); background: var(--el-color-danger-light-9); }
 .task-count { font-variant-numeric: tabular-nums; }
 
@@ -1151,10 +1156,11 @@ onUnmounted(() => {
   animation: star-pop 0.32s ease;
 }
 
+/* 只做缩放，不加发光/描边，避免出现类似边框的光晕 */
 @keyframes star-pop {
-  0% { transform: scale(1); filter: none; }
-  40% { transform: scale(1.22); filter: drop-shadow(0 0 6px rgba(57, 117, 203, 0.55)); }
-  100% { transform: scale(1); filter: none; }
+  0% { transform: scale(1); }
+  45% { transform: scale(1.28); }
+  100% { transform: scale(1); }
 }
 
 .countdown-tag {
