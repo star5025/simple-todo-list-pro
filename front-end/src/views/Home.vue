@@ -135,9 +135,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.home-container { flex-direction: column; flex: 1; min-width: 0; }
-.main-container { width: 100%; max-width: 1440px; margin: 0 auto; flex: 1; min-width: 0; align-items: stretch; }
-.main-content { padding: 32px; min-width: 0; overflow: visible; }
+.home-container { flex-direction: column; flex: 1; min-width: 0; height: 100%; min-height: 0; }
+.main-container { width: 100%; max-width: 1440px; margin: 0 auto 16px; flex: 1; min-width: 0; min-height: 0; align-items: stretch; }
+.main-content { padding: 32px; min-width: 0; min-height: 0; overflow-y: auto; }
 .home-content { width: 100%; max-width: 1040px; margin: 0 auto; min-width: 0; }
 .el-fade-in-enter-active, .el-fade-in-leave-active { transition: opacity .12s ease; }
 /* 语言切换内容区淡入上浮过渡 */

@@ -212,9 +212,9 @@ defineExpose({
   border-right: 1px solid var(--app-border);
   display: flex;
   flex-direction: column;
-  /* 跟随内容高度铺满，避免出现底部空隙 */
   align-self: stretch;
-  min-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 .sidebar-container { display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1; }
 .list-link { display: flex; align-items: center; gap: 10px; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; padding: 10px 12px; min-height: 44px; transition: background-color .24s ease, color .24s ease, transform .24s ease; }
@@ -225,14 +225,15 @@ defineExpose({
 .user-info-section .custom-button { background: white; color: var(--app-muted); border-color: var(--app-border); }
 .favourite-card, .filter-card { border: 0; border-radius: 0; }
 /* 收藏卡片占满剩余高度，内容超出时内部滚动（桌面端随窗口高度自适应） */
-.favourite-card { flex: 0 0 auto; min-height: 0; }
-.sidebar :deep(.el-card__header) { padding: 16px 0 10px; border: 0; }
-.sidebar :deep(.el-card__body) { padding: 0; }
+.favourite-card { flex: 1 1 auto; min-height: 170px; display: flex; flex-direction: column; }
+.sidebar :deep(.el-card__header) { padding: 16px 0 10px; border: 0; flex: none; }
+.sidebar :deep(.el-card__body) { padding: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 .favourite-header, .filter-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--app-muted); }
 .favourite-header .el-icon, .filter-header .el-icon { font-size: 15px; }
-/* 展示全部收藏；高度随窗口自适应，超出时内部滚动 */
+/* 展示全部收藏；填满剩余高度，超出时内部滚动 */
 .favourite-content {
-  max-height: clamp(170px, calc(100vh - 470px), 46vh);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
@@ -245,7 +246,9 @@ defineExpose({
 .favourite-content:hover::-webkit-scrollbar-thumb { background: #c7d0db; }
 /* 移动端抽屉：恢复自然流式布局，限制收藏区高度 */
 @media (max-width: 760px) {
-  .sidebar { width: 100%; flex: 0 0 auto; min-height: auto; display: block; border: 0; padding: 16px 20px 32px; }
+  .sidebar { width: 100%; flex: 0 0 auto; min-height: auto; height: auto; display: block; border: 0; padding: 16px 20px 32px; overflow: visible; }
+  .favourite-card { display: block; }
+  .sidebar :deep(.el-card__body) { overflow: visible; display: block; }
   .sidebar-container { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
   .favourite-card { display: block; }
   .sidebar :deep(.el-card__body) { overflow: visible; display: block; }
