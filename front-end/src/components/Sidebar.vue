@@ -50,7 +50,7 @@
             <el-text size="small" type="info">{{ t('sidebar.noFavourites') }}</el-text>
           </div>
           
-          <div v-else class="favourite-list">
+          <TransitionGroup v-else name="fav-bubble" tag="div" class="favourite-list">
             <div 
               v-for="todo in favouriteTodos" 
               :key="todo.taskId"
@@ -62,7 +62,7 @@
                 {{ formatDueTime(todo.dueTime) }}
               </div>
             </div>
-          </div>
+          </TransitionGroup>
         </div>
       </el-card>
       
@@ -204,11 +204,45 @@ defineExpose({
 .sidebar :deep(.el-card__body) { padding: 0; }
 .favourite-header, .filter-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--app-muted); }
 .favourite-header .el-icon, .filter-header .el-icon { font-size: 15px; }
-.favourite-list { display: flex; flex-direction: column; gap: 4px; }
-.favourite-item { padding: 10px; border-radius: 8px; cursor: pointer; }
-.favourite-item:hover { background: var(--app-bg); }
+.favourite-list { display: flex; flex-direction: column; gap: 6px; }
+/* 圆角气泡卡片 */
+.favourite-item {
+  position: relative;
+  padding: 9px 11px;
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-bg, #f7f8fa);
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+.favourite-item:hover {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+  transform: translateY(-1px);
+}
 .favourite-item-name { font-size: 13px; color: var(--el-text-color-primary); overflow-wrap: anywhere; }
 .favourite-item-due { font-size: 12px; color: var(--app-muted); margin-top: 4px; }
+
+/* 新收藏项像消息气泡一样浮现 */
+.fav-bubble-enter-active {
+  transition: opacity .34s cubic-bezier(.22, 1.15, .36, 1), transform .34s cubic-bezier(.22, 1.15, .36, 1);
+}
+.fav-bubble-leave-active {
+  transition: opacity .18s ease, transform .18s ease;
+  position: absolute;
+  width: 100%;
+}
+.fav-bubble-enter-from {
+  opacity: 0;
+  transform: translateY(10px) scale(.92);
+}
+.fav-bubble-leave-to {
+  opacity: 0;
+  transform: scale(.96);
+}
+.fav-bubble-move {
+  transition: transform .28s cubic-bezier(.22, 1.1, .36, 1);
+}
 .empty-container, .loading-container { padding: 12px 8px; }
 .filter-content { display: flex; flex-direction: column; gap: 20px; }
 .filter-group { display: flex; flex-direction: column; gap: 8px; }
