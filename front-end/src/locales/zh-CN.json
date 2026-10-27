@@ -23,6 +23,8 @@
   },
   "header": {
     "greetingLabel": "问候语",
+    "themeDark": "切换到深色模式",
+    "themeLight": "切换到浅色模式",
     "greeting": {
       "morning": "早上好",
       "forenoon": "上午好",

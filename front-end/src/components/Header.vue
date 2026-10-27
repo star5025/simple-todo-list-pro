@@ -19,6 +19,14 @@
         <el-avatar :size="30">{{ displayedUserName.charAt(0).toUpperCase() }}</el-avatar>
         <span class="username">{{ displayedUserName }}</span>
       </button>
+      <el-button
+        class="theme-button"
+        :aria-label="isDark ? t('header.themeLight') : t('header.themeDark')"
+        :title="isDark ? t('header.themeLight') : t('header.themeDark')"
+        @click="toggleTheme"
+      >
+        <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
+      </el-button>
       <el-dropdown @command="switchLanguage">
         <el-button class="language-button" :aria-label="t('header.language')">
           {{ currentLanguage === 'zh-CN' ? '中文' : 'EN' }}
@@ -39,8 +47,9 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown, Menu } from '@element-plus/icons-vue'
+import { ArrowDown, Menu, Moon, Sunny } from '@element-plus/icons-vue'
 import { clearUserInfoCache } from '@/utils/user'
+import { isDark, toggleTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
 
 defineProps({ mobile: Boolean, navigationOpen: Boolean })
@@ -101,6 +110,8 @@ const handleLogout = () => {
 .brand span { color: var(--app-muted); font-size: 11px; font-weight: 500; letter-spacing: .4px; margin-left: 4px; }
 .greeting { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 8px; padding: 4px 10px; border-radius: 999px; background: var(--app-bg); color: var(--el-text-color-regular); font-size: 13px; white-space: nowrap; }
 .greeting-emoji { font-size: 15px; line-height: 1; }
+.theme-button { border-color: transparent; background: transparent; color: var(--app-muted); padding: 8px; }
+.theme-button:hover { color: var(--el-color-primary); background: var(--app-bg); }
 .profile-button, .menu-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
 .profile-button, .menu-button { transition: background-color .15s ease, color .15s ease; }
 .username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--el-text-color-regular); }
