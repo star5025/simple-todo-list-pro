@@ -15,6 +15,14 @@
         <span class="greeting-emoji" aria-hidden="true">{{ greeting.emoji }}</span>
         <span class="greeting-text">{{ greetingLine }}</span>
       </div>
+      <div class="header-clock" :aria-label="`${dateText} ${weekdayText} ${timeText}`">
+        <div class="clock-date">{{ dateText }}<span class="clock-weekday">{{ weekdayText }}</span></div>
+        <div class="clock-time">
+          <transition name="flip" mode="out-in">
+            <span :key="timeText" class="clock-digits">{{ timeText }}</span>
+          </transition>
+        </div>
+      </div>
       <button class="profile-button" type="button" :aria-label="t('sidebar.userInfo')" @click="goToUserInfo">
         <el-avatar :size="30">{{ displayedUserName.charAt(0).toUpperCase() }}</el-avatar>
       </button>
@@ -84,9 +92,15 @@ const greetingLine = computed(() => {
   return `${greeting.value.text}${locale.value === 'zh-CN' ? '，' : ', '}${name}`
 })
 
+// 中间时钟：日期 + 时分，分钟变化时翻页
+const pad = value => String(value).padStart(2, '0')
+const timeText = computed(() => `${pad(now.value.getHours())}:${pad(now.value.getMinutes())}`)
+const dateText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' }).format(now.value))
+const weekdayText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short' }).format(now.value))
+
 onMounted(() => {
   window.addEventListener('usernameUpdated', handleUsernameUpdate)
-  clockTimer = window.setInterval(() => { now.value = new Date() }, 60 * 1000)
+  clockTimer = window.setInterval(() => { now.value = new Date() }, 10 * 1000)
 })
 onUnmounted(() => {
   window.removeEventListener('usernameUpdated', handleUsernameUpdate)
@@ -102,14 +116,37 @@ const switchLanguage = lang => {
 
 <style scoped>
 .header { height: 72px; padding: 0 32px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
-.header-container { height: 100%; max-width: none; margin: 0; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-container { height: 100%; max-width: none; margin: 0; display: flex; align-items: center; gap: 12px; min-width: 0; position: relative; }
 .brand { margin-right: 12px; color: var(--el-text-color-primary); text-decoration: none; font-size: 18px; font-weight: 650; letter-spacing: -.5px; white-space: nowrap; }
 .brand span { color: var(--app-muted); font-size: 11px; font-weight: 500; letter-spacing: .4px; margin-left: 4px; }
-.greeting { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 8px; padding: 4px 10px; border-radius: 999px; background: var(--app-bg); color: var(--el-text-color-regular); font-size: 13px; white-space: nowrap; }
+.greeting { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px; color: var(--el-text-color-regular); font-size: 13px; white-space: nowrap; }
 .greeting-emoji { font-size: 15px; line-height: 1; }
+/* 中间翻页时钟 */
+.header-clock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.15;
+  user-select: none;
+  pointer-events: none;
+}
+.clock-date { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--app-muted); letter-spacing: .2px; }
+.clock-weekday { opacity: .85; }
+.clock-time { position: relative; perspective: 320px; height: 22px; min-width: 52px; display: flex; justify-content: center; }
+.clock-digits { display: inline-block; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--el-text-color-primary); letter-spacing: .5px; }
+/* 分钟切换的翻页动画 */
+.flip-enter-active { transition: transform .28s cubic-bezier(.3, .8, .3, 1), opacity .28s ease; }
+.flip-leave-active { transition: transform .2s ease, opacity .2s ease; position: absolute; }
+.flip-enter-from { transform: rotateX(-90deg); opacity: 0; }
+.flip-leave-to { transform: rotateX(90deg); opacity: 0; }
 .theme-button { border-color: transparent; background: transparent; color: var(--app-muted); padding: 8px; }
 .theme-button:hover { color: var(--el-color-primary); background: var(--app-bg); }
-.profile-button, .menu-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
+.profile-button, .menu-button { margin-left: auto; border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
 .profile-button, .menu-button { transition: background-color .15s ease, color .15s ease; }
 .username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--el-text-color-regular); }
 .profile-button .el-avatar { background: var(--app-bg); color: var(--el-color-primary); font-weight: 600; border: 1px solid var(--app-border); }
@@ -124,8 +161,9 @@ const switchLanguage = lang => {
 .language-button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 @media (max-width: 760px) {
   .header { height: auto; min-height: 64px; padding: 8px 12px; }
-  .greeting { margin-right: 0; padding: 4px 8px; }
+  .greeting { padding: 4px 0; }
   .greeting-text { display: none; }
+  .header-clock { display: none; }
   .header-container { gap: 4px; flex-wrap: wrap; }
   .brand { font-size: 16px; }
   .profile-button { padding: 4px; }
