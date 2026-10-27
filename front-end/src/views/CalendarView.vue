@@ -130,6 +130,20 @@ const rangeDays = computed(() => view.value === 'month'
   ? (() => { const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1); return Array.from({ length: 42 }, (_, i) => addDays(weekStart(first), i)) })()
   : Array.from({ length: 7 }, (_, i) => addDays(weekStart(cursor.value), i)))
 
+// 热力分级以当前用户自己的数据为基准：峰值越高的用户，浅色阈值也相应提高
+const peakDayCount = computed(() => {
+  let peak = 0
+  for (const date of rangeDays.value) {
+    peak = Math.max(peak, tasksByKey.value[keyOf(date)]?.length || 0)
+  }
+  return peak
+})
+const heatLevel = count => {
+  if (!count) return 0
+  const scale = Math.max(4, peakDayCount.value)
+  return Math.min(4, Math.max(1, Math.ceil((count / scale) * 4)))
+}
+
 const monthDays = computed(() => {
   const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
   return rangeDays.value.map(date => {
@@ -140,8 +154,7 @@ const monthDays = computed(() => {
       inMonth: date.getMonth() === first.getMonth(),
       isToday: keyOf(date) === todayKey.value,
       count,
-      // 贡献墙分级：0 无待办，1-2 浅，3-4 中，5-7 深，8+ 最深
-      level: count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 7 ? 3 : 4,
+      level: heatLevel(count),
       label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
     }
   })
