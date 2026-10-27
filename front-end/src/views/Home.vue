@@ -163,30 +163,30 @@ onBeforeUnmount(() => {
 /* 右侧悬浮新增按钮 */
 .fab-add {
   position: fixed;
-  right: 28px;
-  bottom: 88px;
+  right: 32px;
+  bottom: 92px;
   z-index: 1200;
-  width: 52px;
-  height: 52px;
+  width: 68px;
+  height: 68px;
   border: 0;
   border-radius: 50%;
   background: var(--el-color-primary);
   color: #fff;
-  font-size: 22px;
+  font-size: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(57, 117, 203, .32);
+  box-shadow: 0 10px 26px rgba(57, 117, 203, .34);
   transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
 }
 .fab-add:hover {
   background: var(--el-color-primary-dark-2);
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(57, 117, 203, .38);
+  box-shadow: 0 14px 30px rgba(57, 117, 203, .42);
 }
 .fab-add:active { transform: scale(.94); }
 @media (max-width: 760px) {
-  .fab-add { right: 16px; bottom: 76px; width: 48px; height: 48px; }
+  .fab-add { right: 18px; bottom: 82px; width: 60px; height: 60px; font-size: 26px; }
 }
 </style>
