@@ -298,7 +298,7 @@ defineExpose({
 .add-todo-container {
   min-width: 0;
   margin-bottom: 24px;
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
 }
 
 .add-todo-card {
@@ -315,7 +315,7 @@ defineExpose({
 }
 
 .add-todo-card :deep(.el-form-item__label) {
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
   line-height: 1.5;
 }
 

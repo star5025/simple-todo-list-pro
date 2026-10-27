@@ -26,6 +26,25 @@
 
 * { box-sizing: border-box; }
 
+/* 黑夜模式：18:00 后自动切换（也可手动加 .dark 预览） */
+html.dark {
+  --app-bg: #11151b;
+  --app-surface: #191f28;
+  --app-border: #2a3341;
+  --app-muted: #93a1b3;
+  --app-star: #f5c542;
+  --heat-1: #1c2633;
+  --heat-2: #243449;
+  --heat-3: #33557f;
+  --heat-4: #5a8fd6;
+  color: #e6ebf2;
+  background: var(--app-bg);
+}
+html.dark body { background: var(--app-bg); color: #e6ebf2; }
+html.dark .el-card, html.dark .el-message-box, html.dark .el-dialog { background: var(--app-surface); }
+html.dark .footer { background: var(--app-surface); }
+html.dark .el-message { background: var(--app-surface); }
+
 /* 滚动容器始终预留滚动条位置，内容增缩时页面宽度不变 */
 .content-main,
 .main-content {

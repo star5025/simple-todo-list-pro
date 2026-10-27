@@ -22,6 +22,16 @@
     "en": "English"
   },
   "header": {
+    "greetingLabel": "Greeting",
+    "greeting": {
+      "morning": "Good morning",
+      "forenoon": "Good morning",
+      "noon": "Good noon",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Good evening",
+      "lateNight": "Late night"
+    },
     "navigation": "Navigation & filters",
     "language": "Switch language",
     "logout": "Logout"

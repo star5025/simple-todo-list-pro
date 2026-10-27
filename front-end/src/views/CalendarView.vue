@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.calendar-container { width: 100%; min-width: 0; color: #243047; }
+.calendar-container { width: 100%; min-width: 0; color: var(--el-text-color-primary, #243047); }
 .calendar-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
 .view-switch { display: inline-flex; border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; overflow: hidden; background: var(--app-surface, #fff); }
 .view-button { min-height: 40px; padding: 0 16px; border: 0; background: transparent; color: var(--app-muted, #697586); font-size: 14px; cursor: pointer; }
@@ -253,10 +253,10 @@ onBeforeUnmount(() => {
 .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .day-cell { min-height: 76px; padding: 8px 6px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; }
 /* 贡献墙：按当日开始的待办数着色，越多越深 */
-.day-cell.heat-1 { background: #eaf2fd; }
-.day-cell.heat-2 { background: #cfe0f8; }
-.day-cell.heat-3 { background: #9dc0ee; }
-.day-cell.heat-4 { background: #5f92d8; color: #fff; }
+.day-cell.heat-1 { background: var(--heat-1, #eaf2fd); }
+.day-cell.heat-2 { background: var(--heat-2, #cfe0f8); }
+.day-cell.heat-3 { background: var(--heat-3, #9dc0ee); }
+.day-cell.heat-4 { background: var(--heat-4, #5f92d8); color: #fff; }
 .day-cell.heat-4 .day-number { color: #fff; }
 .day-cell:hover { border-color: var(--el-color-primary-light-5); }
 .day-cell.outside { color: var(--app-muted, #697586); opacity: .45; }
@@ -266,11 +266,11 @@ onBeforeUnmount(() => {
 .day-cell.today.heat-4 .day-number { color: #fff; }
 .day-number { font-size: 14px; min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
 .heat-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font-size: 11px; color: var(--app-muted, #697586); }
-.heat-legend .heat-cell { width: 11px; height: 11px; border-radius: 3px; display: inline-block; background: #eef1f5; }
-.heat-legend .heat-cell.heat-1 { background: #eaf2fd; }
-.heat-legend .heat-cell.heat-2 { background: #cfe0f8; }
-.heat-legend .heat-cell.heat-3 { background: #9dc0ee; }
-.heat-legend .heat-cell.heat-4 { background: #5f92d8; }
+.heat-legend .heat-cell { width: 11px; height: 11px; border-radius: 3px; display: inline-block; background: var(--app-border, #eef1f5); }
+.heat-legend .heat-cell.heat-1 { background: var(--heat-1, #eaf2fd); }
+.heat-legend .heat-cell.heat-2 { background: var(--heat-2, #cfe0f8); }
+.heat-legend .heat-cell.heat-3 { background: var(--heat-3, #9dc0ee); }
+.heat-legend .heat-cell.heat-4 { background: var(--heat-4, #5f92d8); }
 .week-view { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .week-day { border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; min-width: 0; cursor: pointer; }
 .week-day:hover { background: var(--app-bg, #f7f8fa); }
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
 .week-day-number.is-today { background: var(--el-color-primary); color: #fff; }
 .week-day-body { min-height: 260px; padding: 8px; }
 .week-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.week-task-item { font-size: 12px; line-height: 1.4; padding: 4px 6px; border-radius: 6px; background: var(--app-bg, #f7f8fa); color: #243047; overflow-wrap: anywhere; }
+.week-task-item { font-size: 12px; line-height: 1.4; padding: 4px 6px; border-radius: 6px; background: var(--app-bg, #f7f8fa); color: var(--el-text-color-primary, #243047); overflow-wrap: anywhere; }
 .week-task-item.done { color: var(--app-muted, #697586); text-decoration: line-through; }
 @media (max-width: 760px) {
   .calendar-body { padding: 10px; }

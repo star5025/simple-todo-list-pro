@@ -11,6 +11,10 @@
         @click="$emit('open-navigation')"
       ><el-icon><Menu /></el-icon></button>
       <router-link class="brand" to="/home/list">Simple Todo List <span>Pro</span></router-link>
+      <div class="greeting" :title="t('header.greetingLabel')">
+        <span class="greeting-emoji" aria-hidden="true">{{ greeting.emoji }}</span>
+        <span class="greeting-text">{{ greeting.text }}</span>
+      </div>
       <button class="profile-button" type="button" :aria-label="t('sidebar.userInfo')" @click="goToUserInfo">
         <el-avatar :size="30">{{ displayedUserName.charAt(0).toUpperCase() }}</el-avatar>
         <span class="username">{{ displayedUserName }}</span>
@@ -33,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowDown, Menu } from '@element-plus/icons-vue'
 import { clearUserInfoCache } from '@/utils/user'
@@ -46,8 +50,35 @@ const router = useRouter()
 const displayedUserName = ref(localStorage.getItem('userName') || '')
 const currentLanguage = ref(localStorage.getItem('locale') || 'zh-CN')
 const handleUsernameUpdate = event => { displayedUserName.value = event.detail }
-onMounted(() => window.addEventListener('usernameUpdated', handleUsernameUpdate))
-onUnmounted(() => window.removeEventListener('usernameUpdated', handleUsernameUpdate))
+
+// 问候语：按小时分段，每分钟刷新一次
+const now = ref(new Date())
+let clockTimer = null
+const greetingKey = computed(() => {
+  const hour = now.value.getHours()
+  if (hour < 5) return 'lateNight'
+  if (hour < 8) return 'morning'
+  if (hour < 11) return 'forenoon'
+  if (hour < 13) return 'noon'
+  if (hour < 17) return 'afternoon'
+  if (hour < 19) return 'evening'
+  if (hour < 23) return 'night'
+  return 'lateNight'
+})
+const greetingEmoji = { lateNight: '🌜', morning: '🌅', forenoon: '☀️', noon: '🌤️', afternoon: '🌞', evening: '🌇', night: '🌙' }
+const greeting = computed(() => ({
+  emoji: greetingEmoji[greetingKey.value],
+  text: t(`header.greeting.${greetingKey.value}`)
+}))
+
+onMounted(() => {
+  window.addEventListener('usernameUpdated', handleUsernameUpdate)
+  clockTimer = window.setInterval(() => { now.value = new Date() }, 60 * 1000)
+})
+onUnmounted(() => {
+  window.removeEventListener('usernameUpdated', handleUsernameUpdate)
+  window.clearInterval(clockTimer)
+})
 const goToUserInfo = () => router.push('/home/userinfo')
 const switchLanguage = lang => {
   locale.value = lang
@@ -66,8 +97,10 @@ const handleLogout = () => {
 <style scoped>
 .header { height: 72px; padding: 0 32px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
 .header-container { height: 100%; max-width: none; margin: 0; display: flex; align-items: center; gap: 12px; min-width: 0; }
-.brand { margin-right: auto; color: var(--el-text-color-primary); text-decoration: none; font-size: 18px; font-weight: 650; letter-spacing: -.5px; white-space: nowrap; }
+.brand { margin-right: 12px; color: var(--el-text-color-primary); text-decoration: none; font-size: 18px; font-weight: 650; letter-spacing: -.5px; white-space: nowrap; }
 .brand span { color: var(--app-muted); font-size: 11px; font-weight: 500; letter-spacing: .4px; margin-left: 4px; }
+.greeting { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 8px; padding: 4px 10px; border-radius: 999px; background: var(--app-bg); color: var(--el-text-color-regular); font-size: 13px; white-space: nowrap; }
+.greeting-emoji { font-size: 15px; line-height: 1; }
 .profile-button, .menu-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: inherit; border-radius: 8px; min-height: 44px; padding: 4px 8px; }
 .profile-button, .menu-button { transition: background-color .15s ease, color .15s ease; }
 .username { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--el-text-color-regular); }
@@ -83,6 +116,8 @@ const handleLogout = () => {
 .language-button:focus-visible, .logout-button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 @media (max-width: 760px) {
   .header { height: auto; min-height: 64px; padding: 8px 12px; }
+  .greeting { margin-right: 0; padding: 4px 8px; }
+  .greeting-text { display: none; }
   .header-container { gap: 4px; flex-wrap: wrap; }
   .brand { font-size: 16px; }
   .profile-button { padding: 4px; }

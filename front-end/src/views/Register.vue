@@ -165,7 +165,7 @@ const goToLogin = () => {
   padding: 24px 16px;
   box-sizing: border-box;
   background: var(--app-bg, #f7f8fa);
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
 }
 
 .register-card {

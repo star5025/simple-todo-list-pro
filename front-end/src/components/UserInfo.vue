@@ -315,7 +315,7 @@ onActivated(() => {
 .user-info-container {
   width: 100%;
   min-width: 0;
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
 }
 
 .user-info-card {
@@ -382,7 +382,7 @@ onActivated(() => {
 }
 
 .user-dialog-form :deep(.el-form-item__label) {
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
   line-height: 1.5;
 }
 

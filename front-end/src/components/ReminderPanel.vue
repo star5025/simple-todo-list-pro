@@ -70,7 +70,7 @@ const visibleReminders = computed(() => showAll.value ? props.reminders : props.
   border-bottom: 1px solid var(--app-border, #e7ebf0);
   background: var(--app-bg, #f7f8fa);
 }
-.panel-title { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: #243047; }
+.panel-title { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--el-text-color-primary, #243047); }
 .panel-title .el-icon { color: var(--el-color-primary); }
 .panel-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .clear-button { border: 0; background: transparent; color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; min-height: 36px; padding: 0 8px; border-radius: 8px; }
@@ -81,7 +81,7 @@ const visibleReminders = computed(() => showAll.value ? props.reminders : props.
 @media (max-width: 760px) {
   .reminder-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; max-height: 50vh; }
 }
-.reminder-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; border-radius: 8px; cursor: pointer; color: #243047; font-size: 14px; text-align: left; }
+.reminder-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; border-radius: 8px; cursor: pointer; color: var(--el-text-color-primary, #243047); font-size: 14px; text-align: left; }
 .reminder-item:hover { background: var(--app-bg, #f7f8fa); }
 .reminder-item.acked .item-name { color: var(--app-muted, #697586); }
 .item-icon { color: var(--el-color-primary); flex: none; font-size: 16px; }

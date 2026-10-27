@@ -122,7 +122,7 @@ onMounted(fetchDashboard)
 </script>
 
 <style scoped>
-.dashboard-container { width: 100%; min-width: 0; color: #243047; }
+.dashboard-container { width: 100%; min-width: 0; color: var(--el-text-color-primary, #243047); }
 .dashboard-title { margin: 0 0 20px; font-size: 24px; font-weight: 600; }
 .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .stat-card { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 18px 16px; display: flex; flex-direction: column; gap: 6px; }
@@ -132,12 +132,12 @@ onMounted(fetchDashboard)
 .stat-card { transition: border-color .15s ease; }
 @media (hover: hover) { .stat-card:hover { border-color: var(--el-color-primary-light-7); } }
 .panel { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e7ebf0); border-radius: 12px; padding: 20px; margin-top: 16px; }
-.panel-title { margin: 0 0 14px; font-size: 16px; font-weight: 600; color: #243047; }
+.panel-title { margin: 0 0 14px; font-size: 16px; font-weight: 600; color: var(--el-text-color-primary, #243047); }
 .attention-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .attention-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; background: var(--app-bg, #f7f8fa); color: var(--app-muted, #697586); font-size: 14px; }
 .attention-item.overdue { background: #fdecec; color: #c04141; }
 .attention-item.overdue .attention-value { color: #c04141; }
-.attention-value { font-weight: 650; font-size: 18px; color: #243047; }
+.attention-value { font-weight: 650; font-size: 18px; color: var(--el-text-color-primary, #243047); }
 .distribution-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .distribution-row { display: grid; grid-template-columns: 74px minmax(0, 1fr) 28px; align-items: center; gap: 10px; }
 .distribution-date { font-size: 13px; color: var(--app-muted, #697586); }

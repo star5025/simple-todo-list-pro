@@ -22,6 +22,16 @@
     "en": "English"
   },
   "header": {
+    "greetingLabel": "问候语",
+    "greeting": {
+      "morning": "早上好",
+      "forenoon": "上午好",
+      "noon": "中午好",
+      "afternoon": "下午好",
+      "evening": "傍晚好",
+      "night": "晚上好",
+      "lateNight": "夜深了"
+    },
     "navigation": "导航与筛选",
     "language": "切换语言",
     "logout": "登出"

@@ -6,7 +6,11 @@ import router from './router'
 
 import ElementPlus, { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import './styles/base.css'
+import { startAutoTheme } from './composables/useTheme'
+
+startAutoTheme()
 
 // 提示消息单条显示：新消息顶替旧消息，不堆叠、不折叠计数。
 // 操作防抖已避免快速连点产生连续弹窗。

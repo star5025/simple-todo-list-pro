@@ -565,7 +565,7 @@ onBeforeUnmount(() => {
 .todo-detail-container {
   width: 100%;
   min-width: 0;
-  color: #243047;
+  color: var(--el-text-color-primary, #243047);
 }
 
 .todo-detail-card {

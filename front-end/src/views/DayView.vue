@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.day-view { width: 100%; min-width: 0; color: #243047; }
+.day-view { width: 100%; min-width: 0; color: var(--el-text-color-primary, #243047); }
 .day-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
 .back-button, .retry-button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: var(--app-surface, #fff); color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; }
 .back-button:hover, .retry-button:hover { color: var(--el-color-primary); border-color: var(--el-color-primary); }
@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
 .section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 15px; font-weight: 600; }
 .section-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.task-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: transparent; cursor: pointer; color: #243047; font-size: 14px; text-align: left; }
+.task-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: transparent; cursor: pointer; color: var(--el-text-color-primary, #243047); font-size: 14px; text-align: left; }
 .task-item:hover { border-color: var(--el-color-primary); }
 .task-item.done .task-name { color: var(--app-muted, #697586); text-decoration: line-through; }
 .task-name { min-width: 0; overflow-wrap: anywhere; }
