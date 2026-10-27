@@ -204,20 +204,41 @@ defineExpose({
 </script>
 
 <style scoped>
-.sidebar { width: 248px; flex: 0 0 248px; padding: 28px 20px; background: var(--app-surface); border-right: 1px solid var(--app-border); overflow: visible; }
-.sidebar-container { display: flex; flex-direction: column; gap: 16px; }
+.sidebar {
+  width: 248px;
+  flex: 0 0 248px;
+  padding: 28px 20px;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border);
+  display: flex;
+  flex-direction: column;
+  /* 固定在视口内，收藏列表在自身区域滚动，不把页面撑长 */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: calc(100vh - 128px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.sidebar:hover::-webkit-scrollbar-thumb { background: #d5dce5; }
+.sidebar-container { display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1; }
 .list-link { display: flex; align-items: center; gap: 10px; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; padding: 10px 12px; min-height: 44px; }
 .list-link.router-link-active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
 .list-link:hover { background: var(--app-bg); }
 .user-info-section .custom-button { background: white; color: var(--app-muted); border-color: var(--app-border); }
 .favourite-card, .filter-card { border: 0; border-radius: 0; }
+/* 收藏卡片占满剩余高度，内容超出时内部滚动（桌面端随窗口高度自适应） */
+.favourite-card { flex: 1 1 auto; min-height: 170px; display: flex; flex-direction: column; }
 .sidebar :deep(.el-card__header) { padding: 16px 0 10px; border: 0; }
-.sidebar :deep(.el-card__body) { padding: 0; }
+.sidebar :deep(.el-card__body) { padding: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 .favourite-header, .filter-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--app-muted); }
 .favourite-header .el-icon, .filter-header .el-icon { font-size: 15px; }
 /* 展示全部收藏；仅在超出可用高度时出现内部滚动条 */
 .favourite-content {
-  max-height: max(160px, calc(100vh - 470px));
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
@@ -228,8 +249,13 @@ defineExpose({
   border-radius: 999px;
 }
 .favourite-content:hover::-webkit-scrollbar-thumb { background: #c7d0db; }
+/* 移动端抽屉：恢复自然流式布局，限制收藏区高度 */
 @media (max-width: 760px) {
-  .favourite-content { max-height: 40vh; }
+  .sidebar { position: static; height: auto; width: 100%; flex: 0 0 auto; display: block; border: 0; padding: 16px 20px 32px; overflow: visible; }
+  .sidebar-container { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .favourite-card { display: block; }
+  .sidebar :deep(.el-card__body) { overflow: visible; display: block; }
+  .favourite-content { max-height: 40vh; overflow-y: auto; }
 }
 
 .favourite-list { display: flex; flex-direction: column; gap: 6px; }
