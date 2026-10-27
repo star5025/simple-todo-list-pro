@@ -4,8 +4,7 @@
       <el-card class="todo-detail-card" v-if="!loading && todo">
         <template #header>
           <div class="card-header">
-            <el-button @click="goBack" type="primary" link>
-              <el-icon><ArrowLeft /></el-icon>
+            <el-button class="back-button" plain :icon="ArrowLeft" @click="goBack">
               {{ t('todoDetail.back') }}
             </el-button>
             <div class="header-title">{{ isEditing ? t('todoDetail.editTodo') : t('todoDetail.todoDetails') }}</div>
@@ -193,8 +192,7 @@
       <el-card class="todo-detail-card" v-else-if="loading">
         <template #header>
           <div class="card-header">
-            <el-button @click="goBack" type="primary" link>
-              <el-icon><ArrowLeft /></el-icon>
+            <el-button class="back-button" plain :icon="ArrowLeft" @click="goBack">
               {{ t('todoDetail.back') }}
             </el-button>
             <div class="header-title">{{ t('todoDetail.loading') }}</div>
@@ -209,8 +207,7 @@
       <el-card class="todo-detail-card" v-else>
         <template #header>
           <div class="card-header">
-            <el-button @click="goBack" type="primary" link>
-              <el-icon><ArrowLeft /></el-icon>
+            <el-button class="back-button" plain :icon="ArrowLeft" @click="goBack">
               {{ t('todoDetail.back') }}
             </el-button>
             <div class="header-title">{{ t('todoDetail.todoDetails') }}</div>
@@ -545,12 +542,22 @@ const saveEdit = async () => {
 }
 
 // 组件挂载时获取数据
+// Alt + ← 返回列表，与左上角返回按钮等价
+const handleBackKeydown = event => {
+  if (event.altKey && event.key === 'ArrowLeft') {
+    event.preventDefault()
+    goBack()
+  }
+}
+
 onMounted(() => {
   fetchTodoDetail()
   fetchSchedule()
+  window.addEventListener('keydown', handleBackKeydown)
 })
 onBeforeUnmount(() => {
   disposed = true
+  window.removeEventListener('keydown', handleBackKeydown)
 })
 </script>
 
@@ -566,6 +573,8 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   background: var(--app-surface, #fff);
   box-shadow: none;
+  /* 允许内部头部使用 sticky，需要在卡片上放开裁剪 */
+  overflow: visible;
 }
 
 .card-header {
@@ -573,6 +582,26 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
+}
+
+/* 返回按钮：明显的描边按钮，触控高度不低于 40px */
+.back-button {
+  min-height: 40px;
+  padding: 0 14px;
+  font-weight: 500;
+}
+
+.back-button :deep(.el-icon) {
+  margin-right: 6px;
+}
+
+/* 头部在内容区滚动时固定，返回入口始终可见；偏移量抵消内容区上内边距 */
+.todo-detail-card :deep(.el-card__header) {
+  position: sticky;
+  top: calc(-1 * var(--content-pad, 32px));
+  z-index: 3;
+  background: var(--app-surface, #fff);
+  border-bottom: 1px solid var(--app-border, #e7ebf0);
 }
 
 .header-title {

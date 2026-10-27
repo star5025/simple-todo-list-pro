@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Loading } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -105,9 +105,21 @@ const fetchDay = async () => {
 
 const openTask = taskId => router.push(`/home/todo/${taskId}`)
 const goBack = () => router.push('/home/calendar')
+// Alt + ← 返回日历
+const handleBackKeydown = event => {
+  if (event.altKey && event.key === 'ArrowLeft') {
+    event.preventDefault()
+    goBack()
+  }
+}
 
 watch(dayKey, fetchDay, { immediate: true })
-onBeforeUnmount(() => { disposed = true; sequence++ })
+onMounted(() => window.addEventListener('keydown', handleBackKeydown))
+onBeforeUnmount(() => {
+  disposed = true
+  sequence++
+  window.removeEventListener('keydown', handleBackKeydown)
+})
 </script>
 
 <style scoped>

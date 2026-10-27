@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .home-container { flex-direction: column; flex: 1; min-width: 0; height: 100%; min-height: 0; }
 .main-container { width: 100%; max-width: none; margin: 0 0 16px; flex: 1; min-width: 0; min-height: 0; align-items: stretch; }
-.main-content { padding: 32px; min-width: 0; min-height: 0; overflow-y: auto; }
+.main-content { --content-pad: 32px; padding: var(--content-pad); min-width: 0; min-height: 0; overflow-y: auto; }
 .home-content { width: 100%; max-width: none; margin: 0; min-width: 0; }
 .el-fade-in-enter-active, .el-fade-in-leave-active { transition: opacity .12s ease; }
 /* 语言切换内容区淡入上浮过渡 */
@@ -157,8 +157,8 @@ onBeforeUnmount(() => {
 .panel-grow-leave-active { transition: opacity .12s ease; }
 .panel-grow-enter-from { opacity: 0; transform: scale(.975); }
 .panel-grow-leave-to { opacity: 0; }
-@media (max-width: 1000px) { .main-content { padding: 24px; } }
-@media (max-width: 760px) { .main-content { padding: 16px 12px 24px; } }
+@media (max-width: 1000px) { .main-content { --content-pad: 24px; padding: var(--content-pad); } }
+@media (max-width: 760px) { .main-content { --content-pad: 12px; padding: var(--content-pad) var(--content-pad) 24px; } }
 
 /* 右侧悬浮新增按钮 */
 .fab-add {
