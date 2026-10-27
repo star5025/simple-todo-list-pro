@@ -28,6 +28,7 @@
 
 /* 黑夜模式：18:00 后自动切换（也可手动加 .dark 预览） */
 html.dark {
+  color-scheme: dark;
   --app-bg: #11151b;
   --app-surface: #191f28;
   --app-border: #2a3341;
@@ -45,11 +46,29 @@ html.dark .el-card, html.dark .el-message-box, html.dark .el-dialog { background
 html.dark .footer { background: var(--app-surface); }
 html.dark .el-message { background: var(--app-surface); }
 
-/* 主题切换期间统一做颜色过渡，结束后移除，避免干扰其他动画 */
-html.theme-switching *,
-html.theme-switching *::before,
-html.theme-switching *::after {
-  transition: background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease !important;
+/* 主题切换：只对主要容器做较长的颜色渐变，避免整页元素同时刷新造成刺眼闪动 */
+html.theme-switching,
+html.theme-switching body,
+html.theme-switching .app-container,
+html.theme-switching .header,
+html.theme-switching .sidebar,
+html.theme-switching .footer,
+html.theme-switching .main-content,
+html.theme-switching .el-card,
+html.theme-switching .el-card__header,
+html.theme-switching .todo-item,
+html.theme-switching .favourite-item,
+html.theme-switching .date-header,
+html.theme-switching .calendar-body,
+html.theme-switching .day-cell,
+html.theme-switching .week-day,
+html.theme-switching .stat-card,
+html.theme-switching .panel,
+html.theme-switching .day-section,
+html.theme-switching .el-input__wrapper,
+html.theme-switching .el-select__wrapper,
+html.theme-switching .el-button {
+  transition: background-color .55s ease-in-out, border-color .55s ease-in-out, color .55s ease-in-out !important;
 }
 
 /* 滚动容器始终预留滚动条位置，内容增缩时页面宽度不变 */
@@ -58,6 +77,7 @@ html.theme-switching *::after {
   scrollbar-gutter: stable;
 }
 html, body, #app { margin: 0; min-width: 320px; min-height: 100%; }
+html { background: var(--app-bg); }
 body { line-height: 1.5; }
 button, input, textarea, select { font: inherit; }
 button, a, input, textarea { -webkit-tap-highlight-color: transparent; }

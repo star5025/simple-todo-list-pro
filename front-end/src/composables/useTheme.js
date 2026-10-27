@@ -46,8 +46,8 @@ export function toggleTheme() {
   window.clearTimeout(switchTimer)
   window.clearTimeout(switchOverlayTimer)
   // 过渡结束后移除临时类，避免影响其它动画
-  switchTimer = window.setTimeout(() => root.classList.remove('theme-switching'), 400)
-  switchOverlayTimer = window.setTimeout(() => { themeSwitching.value = false }, 600)
+  switchTimer = window.setTimeout(() => root.classList.remove('theme-switching'), 600)
+  switchOverlayTimer = window.setTimeout(() => { themeSwitching.value = false }, 700)
 }
 
 let timer = null
