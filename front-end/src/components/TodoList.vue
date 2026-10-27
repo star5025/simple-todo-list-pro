@@ -1011,13 +1011,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--app-border, #e7ebf0);
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border, #e7ebf0);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
   cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
 }
 
 .todo-item:hover {
-  background: #f8fafc;
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+  transform: translateY(-1px);
 }
 
 .todo-item:focus-visible,
@@ -1027,6 +1033,7 @@ onUnmounted(() => {
 }
 
 .todo-item.selected {
+  border-color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
 }
 

@@ -30,14 +30,22 @@
             :key="day.key"
             type="button"
             class="day-cell"
-            :class="{ 'outside': !day.inMonth, 'today': day.isToday }"
+            :class="[{ 'outside': !day.inMonth, 'today': day.isToday }, `heat-${day.level}`]"
             :aria-label="`${day.label}${day.count ? ' · ' + day.count : ''}`"
             @click="openDay(day)"
           >
             <span class="day-number">{{ day.number }}</span>
-            <span v-if="day.count" class="day-badge" aria-hidden="true">{{ day.count }}</span>
-            <span v-else class="day-placeholder" aria-hidden="true"></span>
           </button>
+        </div>
+        <!-- 贡献墙图例 -->
+        <div class="heat-legend" aria-hidden="true">
+          <span>{{ locale === 'zh-CN' ? '少' : 'Less' }}</span>
+          <i class="heat-cell heat-0"></i>
+          <i class="heat-cell heat-1"></i>
+          <i class="heat-cell heat-2"></i>
+          <i class="heat-cell heat-3"></i>
+          <i class="heat-cell heat-4"></i>
+          <span>{{ locale === 'zh-CN' ? '多' : 'More' }}</span>
         </div>
       </div>
 
@@ -124,14 +132,19 @@ const rangeDays = computed(() => view.value === 'month'
 
 const monthDays = computed(() => {
   const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
-  return rangeDays.value.map(date => ({
-    key: keyOf(date),
-    number: date.getDate(),
-    inMonth: date.getMonth() === first.getMonth(),
-    isToday: keyOf(date) === todayKey.value,
-    count: tasksByKey.value[keyOf(date)]?.length || 0,
-    label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
-  }))
+  return rangeDays.value.map(date => {
+    const count = tasksByKey.value[keyOf(date)]?.length || 0
+    return {
+      key: keyOf(date),
+      number: date.getDate(),
+      inMonth: date.getMonth() === first.getMonth(),
+      isToday: keyOf(date) === todayKey.value,
+      count,
+      // 贡献墙分级：0 无待办，1-2 浅，3-4 中，5-7 深，8+ 最深
+      level: count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 7 ? 3 : 4,
+      label: new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date)
+    }
+  })
 })
 
 const weekDays = computed(() => rangeDays.value.map(date => ({
@@ -214,7 +227,7 @@ onBeforeUnmount(() => {
 .view-button { min-height: 40px; padding: 0 16px; border: 0; background: transparent; color: var(--app-muted, #697586); font-size: 14px; cursor: pointer; }
 .view-button.active { background: var(--el-color-primary); color: #fff; font-weight: 600; }
 .view-button, .nav-button, .day-cell { transition: background-color .12s ease, border-color .12s ease; }
-.day-number, .day-badge, .week-day-number { font-variant-numeric: tabular-nums; }
+.day-number, .week-day-number { font-variant-numeric: tabular-nums; }
 .calendar-title { margin: 0 auto 0 0; font-size: 18px; font-weight: 600; }
 .nav-actions { display: flex; gap: 6px; }
 .nav-button { min-height: 40px; padding: 0 12px; border: 1px solid var(--app-border, #e7ebf0); border-radius: 8px; background: var(--app-surface, #fff); color: var(--app-muted, #697586); font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -225,14 +238,26 @@ onBeforeUnmount(() => {
 .weekday-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 8px; }
 .weekday-cell { text-align: center; font-size: 12px; color: var(--app-muted, #697586); padding: 6px 0; }
 .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.day-cell { min-height: 76px; padding: 8px 6px; border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; }
-.day-cell:hover { background: var(--app-bg, #f7f8fa); }
-.day-cell.outside { color: var(--app-muted, #697586); opacity: 0.55; }
+.day-cell { min-height: 76px; padding: 8px 6px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; }
+/* 贡献墙：按当日开始的待办数着色，越多越深 */
+.day-cell.heat-1 { background: #eaf2fd; }
+.day-cell.heat-2 { background: #cfe0f8; }
+.day-cell.heat-3 { background: #9dc0ee; }
+.day-cell.heat-4 { background: #5f92d8; color: #fff; }
+.day-cell.heat-4 .day-number { color: #fff; }
+.day-cell:hover { border-color: var(--el-color-primary-light-5); }
+.day-cell.outside { color: var(--app-muted, #697586); opacity: .45; }
+.day-cell.outside.heat-1, .day-cell.outside.heat-2, .day-cell.outside.heat-3, .day-cell.outside.heat-4 { background: transparent; }
+.day-cell.today { border-color: var(--el-color-primary); }
 .day-cell.today .day-number { color: var(--el-color-primary); font-weight: 700; }
+.day-cell.today.heat-4 .day-number { color: #fff; }
 .day-number { font-size: 14px; min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
-.day-cell.today .day-number { border: 1px solid var(--el-color-primary); }
-.day-badge { align-self: flex-start; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
-.day-placeholder { min-height: 4px; }
+.heat-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font-size: 11px; color: var(--app-muted, #697586); }
+.heat-legend .heat-cell { width: 11px; height: 11px; border-radius: 3px; display: inline-block; background: #eef1f5; }
+.heat-legend .heat-cell.heat-1 { background: #eaf2fd; }
+.heat-legend .heat-cell.heat-2 { background: #cfe0f8; }
+.heat-legend .heat-cell.heat-3 { background: #9dc0ee; }
+.heat-legend .heat-cell.heat-4 { background: #5f92d8; }
 .week-view { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .week-day { border: 1px solid var(--app-border, #e7ebf0); border-radius: 10px; min-width: 0; cursor: pointer; }
 .week-day:hover { background: var(--app-bg, #f7f8fa); }
@@ -249,7 +274,7 @@ onBeforeUnmount(() => {
 @media (max-width: 760px) {
   .calendar-body { padding: 10px; }
   .day-cell { min-height: 48px; padding: 6px 2px; align-items: center; border-radius: 8px; }
-  .day-badge { min-width: 18px; height: 18px; padding: 0 4px; font-size: 11px; }
+  .heat-legend { margin-top: 8px; }
   .month-grid { gap: 2px; }
   .week-view { display: flex; flex-direction: column; gap: 8px; }
   .week-day { display: flex; align-items: stretch; }
