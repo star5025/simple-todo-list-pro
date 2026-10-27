@@ -252,8 +252,15 @@ const taskId = route.params.id
 const actionBusy = ref(false)
 let disposed = false
 
-const notifyFavouriteChanged = () => {
-  window.dispatchEvent(new CustomEvent('favouriteChanged'))
+const notifyFavouriteChanged = (favourite) => {
+  const task = todo.value
+  window.dispatchEvent(new CustomEvent('favouriteChanged', {
+    detail: task ? {
+      taskId: task.taskId,
+      favourite,
+      task: { taskId: task.taskId, taskName: task.taskName, dueTime: task.dueTime || null }
+    } : undefined
+  }))
 }
 
 // 详情页直接收藏/取消收藏：只提交 favourite 字段，避免旧快照覆盖其他字段
@@ -266,7 +273,7 @@ const toggleFavourite = async () => {
     if (disposed) return
     if (response.code === 1) {
       todo.value.favourite = next
-      notifyFavouriteChanged()
+      notifyFavouriteChanged(next)
       ElMessage.success(t(next ? 'todoList.addedToFavorites' : 'todoList.removedFromFavorites'))
     } else {
       ElMessage.error(response.msg || t('todoList.favoriteOperationFailed'))
@@ -311,7 +318,7 @@ const completeTodo = async () => {
     if (disposed) return
     if (response.code === 1) {
       todo.value.status = true
-      notifyFavouriteChanged()
+      notifyFavouriteChanged(undefined)
       // 直接更新本地状态，不重新拉取详情：避免整页加载动画，只保留顶部提示与勾选动画
       ElMessage.success(t('todoList.taskCompleted'))
     } else {
@@ -340,7 +347,7 @@ const confirmDeleteTodo = async () => {
     const response = await request.delete(`/task/${taskId}`)
     if (disposed) return
     if (response.code === 1) {
-      notifyFavouriteChanged()
+      notifyFavouriteChanged(false)
       ElMessage.success(t('todoList.deleteSuccess'))
       router.push('/home/list')
     } else {

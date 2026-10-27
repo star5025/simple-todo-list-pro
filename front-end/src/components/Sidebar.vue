@@ -123,11 +123,10 @@ const fetchFavouriteTodos = async (silent = false) => {
     
     if (disposed || sequence !== favouriteRequest) return
     if (response.code === 1) {
-      // 确保favourite字段正确设置
-      favouriteTodos.value = response.data.records.map(todo => ({
-        ...todo,
-        favourite: true // 明确设置为已收藏
-      }))
+      const records = response.data.records.map(todo => ({ ...todo, favourite: true }))
+      // 服务器按创建时间取前 5 条，可能不含刚收藏的旧任务；把本地新增的置顶合并，避免“收藏后没更新”
+      const pinned = [...pinnedFavourites.values()].filter(item => !records.some(r => r.taskId === item.taskId))
+      favouriteTodos.value = [...pinned, ...records].slice(0, 8)
     } else {
       ElMessage.error(response.msg || '获取收藏待办失败')
     }
@@ -160,8 +159,20 @@ const goToTodoDetail = (taskId) => {
   emit('navigate')
 }
 
-// 处理收藏状态变化：合并连续操作，静默刷新，避免骨架屏闪烁
-const handleFavouriteChange = () => {
+// 处理收藏状态变化：先本地即时增删，再合并刷新服务器数据
+const pinnedFavourites = new Map()
+const handleFavouriteChange = (event) => {
+  const detail = event?.detail
+  if (detail && detail.taskId) {
+    if (detail.favourite === false) {
+      favouriteTodos.value = favouriteTodos.value.filter(todo => todo.taskId !== detail.taskId)
+      pinnedFavourites.delete(detail.taskId)
+    } else if (detail.favourite === true && detail.task) {
+      const item = { ...detail.task, favourite: true }
+      favouriteTodos.value = [item, ...favouriteTodos.value.filter(todo => todo.taskId !== detail.taskId)]
+      pinnedFavourites.set(detail.taskId, item)
+    }
+  }
   favouriteRequest++
   window.clearTimeout(favouriteRefreshTimer)
   favouriteRefreshTimer = window.setTimeout(() => {

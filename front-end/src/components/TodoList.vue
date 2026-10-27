@@ -810,9 +810,13 @@ const toggleFavourite = async (todo) => {
       // 更新本地状态
       todo.favourite = newFavouriteStatus;
       
-      // 触发自定义事件，通知侧边栏更新收藏列表
+      // 触发自定义事件，通知侧边栏更新收藏列表（带上任务信息，便于立即插入）
       window.dispatchEvent(new CustomEvent('favouriteChanged', {
-        detail: { taskId: todo.taskId, favourite: newFavouriteStatus }
+        detail: {
+          taskId: todo.taskId,
+          favourite: newFavouriteStatus,
+          task: { taskId: todo.taskId, taskName: todo.taskName, dueTime: todo.dueTime || null }
+        }
       }));
       
       // 根据操作类型显示不同的提示信息
