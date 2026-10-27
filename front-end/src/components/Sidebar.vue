@@ -224,9 +224,11 @@ defineExpose({
 .sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
 .sidebar:hover::-webkit-scrollbar-thumb { background: #d5dce5; }
 .sidebar-container { display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1; }
-.list-link { display: flex; align-items: center; gap: 10px; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; padding: 10px 12px; min-height: 44px; }
-.list-link.router-link-active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
+.list-link { display: flex; align-items: center; gap: 10px; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; padding: 10px 12px; min-height: 44px; transition: background-color .24s ease, color .24s ease, transform .24s ease; }
+.list-link.router-link-active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); transform: translateX(2px); }
 .list-link:hover { background: var(--app-bg); }
+.list-link .el-icon { transition: color .24s ease, transform .24s ease; }
+.list-link.router-link-active .el-icon { transform: scale(1.06); }
 .user-info-section .custom-button { background: white; color: var(--app-muted); border-color: var(--app-border); }
 .favourite-card, .filter-card { border: 0; border-radius: 0; }
 /* 收藏卡片占满剩余高度，内容超出时内部滚动（桌面端随窗口高度自适应） */

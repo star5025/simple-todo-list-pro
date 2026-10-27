@@ -47,11 +47,17 @@ const router = useRouter()
 const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 760px)')
 const navigationOpen = ref(false)
-// 仅日历 ↔ 当日页面之间使用淡入过渡；其余子页面切换保持无过渡，避免整页闪动。
+// 侧栏三个主面板之间切换用缩放浮现；日历与其当日页之间用淡入。
+const panelPaths = ['/home/list', '/home/dashboard', '/home/calendar']
 const isDayPath = path => path === '/home/calendar' || path.startsWith('/home/day/')
+const pathOnly = path => (path || '').split('?')[0]
 const innerTransition = ref('')
 watch(() => route.fullPath, (to, from) => {
-  innerTransition.value = from && to !== from && isDayPath(from) && isDayPath(to) ? 'day-fade' : ''
+  const next = pathOnly(to), prev = pathOnly(from)
+  innerTransition.value = from && to !== from
+    ? (panelPaths.includes(prev) && panelPaths.includes(next) ? 'panel-grow'
+      : isDayPath(prev) && isDayPath(next) ? 'day-fade' : '')
+    : ''
   navigationOpen.value = false
 })
 watch(isMobile, () => { navigationOpen.value = false })
@@ -140,6 +146,11 @@ onBeforeUnmount(() => {
 /* 日历与当日页面之间：纯淡入 + 极轻微缩放，不产生位移与额外滚动空间 */
 .day-fade-enter-active, .day-fade-leave-active { transition: opacity .18s ease, transform .18s ease; }
 .day-fade-enter-from, .day-fade-leave-to { opacity: 0; transform: scale(.995); }
+/* 待办 / 看板 / 日历 三个面板切换：内容轻微放大浮现 */
+.panel-grow-enter-active { transition: opacity .22s ease, transform .22s cubic-bezier(.22, .61, .36, 1); }
+.panel-grow-leave-active { transition: opacity .12s ease; }
+.panel-grow-enter-from { opacity: 0; transform: scale(.975); }
+.panel-grow-leave-to { opacity: 0; }
 @media (max-width: 1000px) { .main-content { padding: 24px; } }
 @media (max-width: 760px) { .main-content { padding: 16px 12px 24px; } }
 </style>
