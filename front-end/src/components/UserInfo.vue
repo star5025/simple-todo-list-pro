@@ -27,6 +27,7 @@
             <div class="user-actions">
               <el-button type="primary" @click="showUsernameDialog">{{ t('userInfo.editUsername') }}</el-button>
               <el-button type="primary" @click="showPasswordDialog">{{ t('userInfo.changePassword') }}</el-button>
+              <el-button type="danger" plain @click="handleLogout">{{ t('header.logout') }}</el-button>
             </div>
           </div>
           
@@ -89,11 +90,21 @@
 import { ref, reactive, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import { clearUserInfoCache } from '@/utils/user'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const router = useRouter()
+
+// 退出登录：清除本地会话并回到登录页
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userName')
+  localStorage.removeItem('userId')
+  clearUserInfoCache()
+  router.push('/login')
+}
 
 // 用户信息
 const userInfo = ref(null)
