@@ -26,7 +26,6 @@ export function applyTheme(dark) {
 }
 
 let switchTimer = null
-let switchOverlayTimer = null
 
 export function setThemeMode(mode) {
   themeMode.value = mode
@@ -34,20 +33,32 @@ export function setThemeMode(mode) {
   applyTheme(resolveDark(mode))
 }
 
-// 按钮点击：平滑过渡切换，600ms 内忽略重复点击
+// 按钮点击：用遮罩淡出完成切换，600ms 内忽略重复点击
 export function toggleTheme() {
   if (themeSwitching.value) return
   themeSwitching.value = true
   const root = document.documentElement
+
+  // 用当前主题背景色覆盖整屏，切换颜色后再淡出，避免逐元素补间造成文字闪烁
+  const veil = document.createElement('div')
+  veil.className = 'theme-fade'
+  veil.style.background = getComputedStyle(root).backgroundColor || (isDark.value ? '#11151b' : '#f7f8fa')
+  document.body.appendChild(veil)
   root.classList.add('theme-switching')
-  applyTheme(!isDark.value)
-  themeMode.value = isDark.value ? 'dark' : 'light'
-  localStorage.setItem(STORAGE_KEY, themeMode.value)
+
+  window.requestAnimationFrame(() => {
+    applyTheme(!isDark.value)
+    themeMode.value = isDark.value ? 'dark' : 'light'
+    localStorage.setItem(STORAGE_KEY, themeMode.value)
+    window.requestAnimationFrame(() => veil.classList.add('theme-fade-out'))
+  })
+
   window.clearTimeout(switchTimer)
-  window.clearTimeout(switchOverlayTimer)
-  // 过渡结束后移除临时类，避免影响其它动画
-  switchTimer = window.setTimeout(() => root.classList.remove('theme-switching'), 600)
-  switchOverlayTimer = window.setTimeout(() => { themeSwitching.value = false }, 700)
+  switchTimer = window.setTimeout(() => {
+    veil.remove()
+    root.classList.remove('theme-switching')
+    themeSwitching.value = false
+  }, 480)
 }
 
 let timer = null

@@ -46,30 +46,23 @@ html.dark .el-card, html.dark .el-message-box, html.dark .el-dialog { background
 html.dark .footer { background: var(--app-surface); }
 html.dark .el-message { background: var(--app-surface); }
 
-/* 主题切换：只对主要容器做较长的颜色渐变，避免整页元素同时刷新造成刺眼闪动 */
-html.theme-switching,
-html.theme-switching body,
-html.theme-switching .app-container,
-html.theme-switching .header,
-html.theme-switching .sidebar,
-html.theme-switching .footer,
-html.theme-switching .main-content,
-html.theme-switching .el-card,
-html.theme-switching .el-card__header,
-html.theme-switching .todo-item,
-html.theme-switching .favourite-item,
-html.theme-switching .date-header,
-html.theme-switching .calendar-body,
-html.theme-switching .day-cell,
-html.theme-switching .week-day,
-html.theme-switching .stat-card,
-html.theme-switching .panel,
-html.theme-switching .day-section,
-html.theme-switching .el-input__wrapper,
-html.theme-switching .el-select__wrapper,
-html.theme-switching .el-button {
-  transition: background-color .55s ease-in-out, border-color .55s ease-in-out, color .55s ease-in-out !important;
+/* 切换期间屏蔽应用内的颜色补间，由遮罩完成视觉过渡，避免文字忽明忽暗 */
+html.theme-switching #app,
+html.theme-switching #app * {
+  transition: none !important;
+  animation-duration: 0s !important;
 }
+
+/* 主题切换遮罩：用旧主题底色盖住整屏再淡出，文字不会出现忽明忽暗的补间 */
+.theme-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .42s ease-in-out;
+}
+.theme-fade-out { opacity: 0; }
 
 /* 滚动容器始终预留滚动条位置，内容增缩时页面宽度不变 */
 .content-main,
