@@ -22,6 +22,10 @@
       </el-main>
     </el-container>
 
+    <button v-if="route.path !== '/home/add'" class="fab-add" type="button" :aria-label="t('sidebar.addTodo')" :title="t('sidebar.addTodo')" @click="goToAdd">
+      <el-icon aria-hidden="true"><Plus /></el-icon>
+    </button>
+
     <ReminderPanel
       v-if="reminders.length"
       :reminders="reminders"
@@ -39,6 +43,7 @@ import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useI18n } from 'vue-i18n'
 import { createReminderPoller } from '@/utils/reminders'
 import Header from '@/components/Header.vue'
+import { Plus } from '@element-plus/icons-vue'
 import Sidebar from '@/components/Sidebar.vue'
 import ReminderPanel from '@/components/ReminderPanel.vue'
 import request from '@/utils/request'
@@ -47,6 +52,7 @@ const router = useRouter()
 const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 760px)')
 const navigationOpen = ref(false)
+const goToAdd = () => router.push('/home/add')
 // 侧栏三个主面板之间切换用缩放浮现；日历与其当日页之间用淡入。
 const panelPaths = ['/home/list', '/home/dashboard', '/home/calendar']
 const isDayPath = path => path === '/home/calendar' || path.startsWith('/home/day/')
@@ -136,9 +142,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .home-container { flex-direction: column; flex: 1; min-width: 0; height: 100%; min-height: 0; }
-.main-container { width: 100%; max-width: 1440px; margin: 0 auto 16px; flex: 1; min-width: 0; min-height: 0; align-items: stretch; }
+.main-container { width: 100%; max-width: none; margin: 0 0 16px; flex: 1; min-width: 0; min-height: 0; align-items: stretch; }
 .main-content { padding: 32px; min-width: 0; min-height: 0; overflow-y: auto; }
-.home-content { width: 100%; max-width: 1040px; margin: 0 auto; min-width: 0; }
+.home-content { width: 100%; max-width: none; margin: 0; min-width: 0; }
 .el-fade-in-enter-active, .el-fade-in-leave-active { transition: opacity .12s ease; }
 /* 语言切换内容区淡入上浮过渡 */
 .locale-fade { animation: locale-fade 0.26s ease; }
@@ -153,4 +159,34 @@ onBeforeUnmount(() => {
 .panel-grow-leave-to { opacity: 0; }
 @media (max-width: 1000px) { .main-content { padding: 24px; } }
 @media (max-width: 760px) { .main-content { padding: 16px 12px 24px; } }
+
+/* 右侧悬浮新增按钮 */
+.fab-add {
+  position: fixed;
+  right: 28px;
+  bottom: 88px;
+  z-index: 1200;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--el-color-primary);
+  color: #fff;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(57, 117, 203, .32);
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.fab-add:hover {
+  background: var(--el-color-primary-dark-2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(57, 117, 203, .38);
+}
+.fab-add:active { transform: scale(.94); }
+@media (max-width: 760px) {
+  .fab-add { right: 16px; bottom: 76px; width: 48px; height: 48px; }
+}
 </style>

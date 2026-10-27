@@ -10,28 +10,6 @@
       <router-link to="/home/calendar" class="list-link" @click="$emit('navigate')">
         <el-icon><Calendar /></el-icon>{{ t('calendar.title') }}
       </router-link>
-      <!-- 新增待办按钮 -->
-      <div class="add-todo-section">
-        <button 
-          class="custom-button custom-button--primary custom-button--large"
-          @click="handleAddTodo"
-        >
-          <el-icon><Plus /></el-icon>
-          {{ t('sidebar.addTodo') }}
-        </button>
-      </div>
-      
-      <!-- 个人信息按钮 -->
-      <div class="user-info-section">
-        <button 
-          class="custom-button custom-button--primary custom-button--large"
-          @click="handleUserInfo"
-        >
-          <el-icon><User /></el-icon>
-          {{ t('sidebar.userInfo') }}
-        </button>
-      </div>
-      
       <!-- 收藏待办卡片 -->
       <el-card class="favourite-card" shadow="never">
         <template #header>
@@ -74,8 +52,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Plus,
-  User,
+
   Star,
   List,
   DataAnalysis,
@@ -91,16 +68,6 @@ const emit = defineEmits(['navigate'])
 // 收藏待办相关
 const favouriteTodos = ref([])
 const loadingFavourites = ref(false)
-
-const handleAddTodo = () => {
-  router.push('/home/add')
-  emit('navigate')
-}
-
-const handleUserInfo = () => {
-  router.push('/home/userinfo')
-  emit('navigate')
-}
 
 // 获取收藏的待办事项
 const firstFavouriteLoad = ref(true)
