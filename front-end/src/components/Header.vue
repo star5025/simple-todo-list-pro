@@ -21,6 +21,7 @@
       </button>
       <el-button
         class="theme-button"
+        :disabled="themeSwitching"
         :aria-label="isDark ? t('header.themeLight') : t('header.themeDark')"
         :title="isDark ? t('header.themeLight') : t('header.themeDark')"
         @click="toggleTheme"
@@ -49,7 +50,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowDown, Menu, Moon, Sunny } from '@element-plus/icons-vue'
 import { clearUserInfoCache } from '@/utils/user'
-import { isDark, toggleTheme } from '@/composables/useTheme'
+import { isDark, themeSwitching, toggleTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
 
 defineProps({ mobile: Boolean, navigationOpen: Boolean })

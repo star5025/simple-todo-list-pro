@@ -15,6 +15,8 @@ const readMode = () => {
 export const isDark = ref(false)
 // auto：按时间自动；light / dark：用户手动选择，优先于自动
 export const themeMode = ref(readMode())
+// 切换过程中禁用按钮，避免连点抖动
+export const themeSwitching = ref(false)
 
 const resolveDark = mode => (mode === 'auto' ? isNightTime() : mode === 'dark')
 
@@ -23,15 +25,29 @@ export function applyTheme(dark) {
   document.documentElement.classList.toggle('dark', dark)
 }
 
+let switchTimer = null
+let switchOverlayTimer = null
+
 export function setThemeMode(mode) {
   themeMode.value = mode
   localStorage.setItem(STORAGE_KEY, mode)
   applyTheme(resolveDark(mode))
 }
 
-// 按钮点击：在浅色与深色之间切换（手动模式）
+// 按钮点击：平滑过渡切换，600ms 内忽略重复点击
 export function toggleTheme() {
-  setThemeMode(isDark.value ? 'light' : 'dark')
+  if (themeSwitching.value) return
+  themeSwitching.value = true
+  const root = document.documentElement
+  root.classList.add('theme-switching')
+  applyTheme(!isDark.value)
+  themeMode.value = isDark.value ? 'dark' : 'light'
+  localStorage.setItem(STORAGE_KEY, themeMode.value)
+  window.clearTimeout(switchTimer)
+  window.clearTimeout(switchOverlayTimer)
+  // 过渡结束后移除临时类，避免影响其它动画
+  switchTimer = window.setTimeout(() => root.classList.remove('theme-switching'), 400)
+  switchOverlayTimer = window.setTimeout(() => { themeSwitching.value = false }, 600)
 }
 
 let timer = null

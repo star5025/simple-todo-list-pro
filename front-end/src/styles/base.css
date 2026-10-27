@@ -45,6 +45,13 @@ html.dark .el-card, html.dark .el-message-box, html.dark .el-dialog { background
 html.dark .footer { background: var(--app-surface); }
 html.dark .el-message { background: var(--app-surface); }
 
+/* 主题切换期间统一做颜色过渡，结束后移除，避免干扰其他动画 */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease !important;
+}
+
 /* 滚动容器始终预留滚动条位置，内容增缩时页面宽度不变 */
 .content-main,
 .main-content {
