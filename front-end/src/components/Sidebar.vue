@@ -113,12 +113,12 @@ const fetchFavouriteTodos = async (silent = false) => {
   const showSkeleton = !silent && firstFavouriteLoad.value
   if (showSkeleton) loadingFavourites.value = true
   try {
-    // 获取用户收藏的待办事项，最多显示5个
+    // 展示全部收藏；容器高度受限时内部滚动
     const response = await request.get('/task/pageQuery', {
       page: 1,
-      pageSize: 5,
+      pageSize: 200,
       favourite: true,
-      orderBy: 'createdTimeDesc' // 按创建时间倒序排列，确保显示最新的收藏
+      orderBy: 'createdTimeDesc'
     })
     
     if (disposed || sequence !== favouriteRequest) return
@@ -126,7 +126,7 @@ const fetchFavouriteTodos = async (silent = false) => {
       const records = response.data.records.map(todo => ({ ...todo, favourite: true }))
       // 服务器按创建时间取前 5 条，可能不含刚收藏的旧任务；把本地新增的置顶合并，避免“收藏后没更新”
       const pinned = [...pinnedFavourites.values()].filter(item => !records.some(r => r.taskId === item.taskId))
-      favouriteTodos.value = [...pinned, ...records].slice(0, 8)
+      favouriteTodos.value = [...pinned, ...records]
     } else {
       ElMessage.error(response.msg || '获取收藏待办失败')
     }
@@ -215,6 +215,23 @@ defineExpose({
 .sidebar :deep(.el-card__body) { padding: 0; }
 .favourite-header, .filter-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--app-muted); }
 .favourite-header .el-icon, .filter-header .el-icon { font-size: 15px; }
+/* 展示全部收藏；仅在超出可用高度时出现内部滚动条 */
+.favourite-content {
+  max-height: max(160px, calc(100vh - 470px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+.favourite-content::-webkit-scrollbar { width: 6px; }
+.favourite-content::-webkit-scrollbar-thumb {
+  background: var(--app-border, #e7ebf0);
+  border-radius: 999px;
+}
+.favourite-content:hover::-webkit-scrollbar-thumb { background: #c7d0db; }
+@media (max-width: 760px) {
+  .favourite-content { max-height: 40vh; }
+}
+
 .favourite-list { display: flex; flex-direction: column; gap: 6px; }
 /* 圆角气泡卡片 */
 .favourite-item {
