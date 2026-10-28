@@ -1,5 +1,8 @@
 <template>
   <div class="register-container">
+    <button class="theme-toggle" type="button" :disabled="themeSwitching" :aria-label="isDark ? '切换到浅色模式' : '切换到深色模式'" :title="isDark ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">
+      {{ isDark ? '☀️' : '🌙' }}
+    </button>
     <el-card class="register-card">
       <template #header>
         <div class="card-header">
@@ -83,6 +86,7 @@ import { useRouter } from 'vue-router'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { isDark, themeSwitching, toggleTheme } from '@/composables/useTheme'
 
 const { locale } = useI18n()
 
@@ -155,6 +159,24 @@ const goToLogin = () => {
 </script>
 
 <style scoped>
+.theme-toggle {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  background: var(--app-surface);
+  color: var(--el-text-color-regular);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.theme-toggle:hover { border-color: var(--el-color-primary); transform: translateY(-1px); }
+.theme-toggle:disabled { opacity: .6; cursor: default; }
 .register-container {
   display: flex;
   flex-direction: column;

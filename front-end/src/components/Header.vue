@@ -18,9 +18,14 @@
       <div class="header-clock" :aria-label="`${dateText} ${weekdayText} ${timeText}`">
         <div class="clock-date">{{ dateText }}<span class="clock-weekday">{{ weekdayText }}</span></div>
         <div class="clock-time">
-          <transition name="flip" mode="out-in">
-            <span :key="timeText" class="clock-digits">{{ timeText }}</span>
-          </transition>
+          <template v-for="(char, index) in timeChars" :key="index">
+            <span v-if="char === ':'" class="clock-colon">:</span>
+            <span v-else class="digit-tile">
+              <transition name="flip" mode="out-in">
+                <span :key="char" class="digit-face">{{ char }}</span>
+              </transition>
+            </span>
+          </template>
         </div>
       </div>
       <button class="profile-button" type="button" :aria-label="t('sidebar.userInfo')" @click="goToUserInfo">
@@ -95,6 +100,8 @@ const greetingLine = computed(() => {
 // 中间时钟：日期 + 时分，分钟变化时翻页
 const pad = value => String(value).padStart(2, '0')
 const timeText = computed(() => `${pad(now.value.getHours())}:${pad(now.value.getMinutes())}`)
+// 拆分为逐位数字，只有变化的位数会翻页
+const timeChars = computed(() => timeText.value.split(''))
 const dateText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' }).format(now.value))
 const weekdayText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short' }).format(now.value))
 
@@ -137,12 +144,41 @@ const switchLanguage = lang => {
 }
 .clock-date { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--app-muted); letter-spacing: .2px; }
 .clock-weekday { opacity: .85; }
-.clock-time { position: relative; perspective: 320px; height: 22px; min-width: 52px; display: flex; justify-content: center; }
-.clock-digits { display: inline-block; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--el-text-color-primary); letter-spacing: .5px; }
-/* 分钟切换的翻页动画 */
-.flip-enter-active { transition: transform .28s cubic-bezier(.3, .8, .3, 1), opacity .28s ease; }
-.flip-leave-active { transition: transform .2s ease, opacity .2s ease; position: absolute; }
-.flip-enter-from { transform: rotateX(-90deg); opacity: 0; }
+/* 计分板式翻页时钟：每位数字单独一块翻页牌 */
+.clock-time { display: flex; align-items: center; gap: 3px; perspective: 320px; }
+.digit-tile {
+  position: relative;
+  width: 20px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--el-text-color-primary);
+}
+/* 中间的翻页接缝 */
+.digit-tile::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--app-border);
+  opacity: .75;
+}
+.digit-face { display: inline-block; line-height: 1; }
+.clock-colon { font-size: 14px; font-weight: 700; color: var(--app-muted); padding: 0 1px; }
+/* 翻页动画：沿水平轴翻转 */
+.flip-enter-active { transition: transform .26s cubic-bezier(.3, .9, .3, 1), opacity .2s ease; transform-origin: center center; }
+.flip-leave-active { transition: transform .18s ease, opacity .18s ease; transform-origin: center center; position: absolute; }
+.flip-enter-from { transform: rotateX(-90deg); opacity: .2; }
 .flip-leave-to { transform: rotateX(90deg); opacity: 0; }
 .theme-button { border-color: transparent; background: transparent; color: var(--app-muted); padding: 8px; }
 .theme-button:hover { color: var(--el-color-primary); background: var(--app-bg); }
