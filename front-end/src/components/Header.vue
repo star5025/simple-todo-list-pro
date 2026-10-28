@@ -20,7 +20,6 @@
         role="button"
         tabindex="0"
         :aria-pressed="showSeconds"
-        :title="showSeconds ? t('header.hideSeconds') : t('header.showSeconds')"
         :aria-label="`${dateText} ${weekdayText} ${timeText}`"
         @click="showSeconds = !showSeconds"
         @keydown.enter.prevent="showSeconds = !showSeconds"
