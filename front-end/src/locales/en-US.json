@@ -24,6 +24,8 @@
   "header": {
     "greetingLabel": "Greeting",
     "themeDark": "Switch to dark mode",
+    "showSeconds": "Click to show seconds",
+    "hideSeconds": "Click to hide seconds",
     "themeLight": "Switch to light mode",
     "greeting": {
       "morning": "Good morning",

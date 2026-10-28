@@ -24,6 +24,8 @@
   "header": {
     "greetingLabel": "问候语",
     "themeDark": "切换到深色模式",
+    "showSeconds": "点击显示秒",
+    "hideSeconds": "点击隐藏秒",
     "themeLight": "切换到浅色模式",
     "greeting": {
       "morning": "早上好",

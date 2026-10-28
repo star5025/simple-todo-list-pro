@@ -15,7 +15,17 @@
         <span class="greeting-emoji" aria-hidden="true">{{ greeting.emoji }}</span>
         <span class="greeting-text">{{ greetingLine }}</span>
       </div>
-      <div class="header-clock" :aria-label="`${dateText} ${weekdayText} ${timeText}`">
+      <div
+        class="header-clock"
+        role="button"
+        tabindex="0"
+        :aria-pressed="showSeconds"
+        :title="showSeconds ? t('header.hideSeconds') : t('header.showSeconds')"
+        :aria-label="`${dateText} ${weekdayText} ${timeText}`"
+        @click="showSeconds = !showSeconds"
+        @keydown.enter.prevent="showSeconds = !showSeconds"
+        @keydown.space.prevent="showSeconds = !showSeconds"
+      >
         <div class="clock-date">{{ dateText }}<span class="clock-weekday">{{ weekdayText }}</span></div>
         <div class="clock-time">
           <template v-for="(char, index) in timeChars" :key="index">
@@ -97,9 +107,14 @@ const greetingLine = computed(() => {
   return `${greeting.value.text}${locale.value === 'zh-CN' ? '，' : ', '}${name}`
 })
 
-// 中间时钟：日期 + 时分，分钟变化时翻页
+// 中间时钟：日期 + 时分；点击切换是否显示秒
 const pad = value => String(value).padStart(2, '0')
-const timeText = computed(() => `${pad(now.value.getHours())}:${pad(now.value.getMinutes())}`)
+const showSeconds = ref(false)
+const timeText = computed(() => {
+  const date = now.value
+  const base = `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return showSeconds.value ? `${base}:${pad(date.getSeconds())}` : base
+})
 // 拆分为逐位数字，只有变化的位数会翻页
 const timeChars = computed(() => timeText.value.split(''))
 const dateText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' }).format(now.value))
@@ -107,7 +122,7 @@ const weekdayText = computed(() => new Intl.DateTimeFormat(locale.value === 'zh-
 
 onMounted(() => {
   window.addEventListener('usernameUpdated', handleUsernameUpdate)
-  clockTimer = window.setInterval(() => { now.value = new Date() }, 10 * 1000)
+  clockTimer = window.setInterval(() => { now.value = new Date() }, 1000)
 })
 onUnmounted(() => {
   window.removeEventListener('usernameUpdated', handleUsernameUpdate)
@@ -140,8 +155,13 @@ const switchLanguage = lang => {
   gap: 1px;
   line-height: 1.15;
   user-select: none;
-  pointer-events: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+  transition: background-color .15s ease;
 }
+.header-clock:hover { background: var(--app-bg); }
+.header-clock:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 .clock-date { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--app-muted); letter-spacing: .2px; }
 .clock-weekday { opacity: .85; }
 /* 计分板式翻页时钟：每位数字单独一块翻页牌 */
